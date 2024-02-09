@@ -1,7 +1,6 @@
 from djitellopy import tello
 import cv2
 import mediapipe as mp
-import tkinter as tk
 import pygame as pg
 
 class PID:
@@ -32,12 +31,10 @@ face_detection = mp_face_detection.FaceDetection()
 
 pid = PID(0.1,0.01,0.1)
 
-window = tk.Tk()
-window.tilte("Control Panel")
 finish = False
 move_amount = 10
 airborne = False
-actions = {pg.K_W:me.move_forward,pg.K_D:me.move_right,pg.K_A:me.move_left,pg.K_S:me.move_back}
+actions = {pg.K_w:me.move_forward,pg.K_d:me.move_right,pg.K_a:me.move_left,pg.K_s:me.move_back}
 desired_width = 200
 desired_height = 300
 
@@ -48,7 +45,7 @@ while True:
             if event.key == pg.K_R and not airborne:
                 me.takeoff()
                 airborne = not airborne
-            elif event.key == pg.K_R:
+            elif event.key == pg.K_r:
                 me.land()
                 airborne = not airborne
     keys = pg.key.get_pressed()
@@ -74,9 +71,16 @@ while True:
                 # PID control
                 error_width = desired_width - relative_width
                 error_height = desired_height - relative_height
-                move_factor = pid.update
-            
+                move_factor = pid.update(error_width)
+                '''
+                if move_factor < 0:
+                    me.move_back(-move_factor)
+                else:
+                    me.move_forward(move_factor)
+                '''
             print(detection)
+    # While testing live an issue showed up here - cv2 refuses to
+    # convert the format sent from the drone
     cv2.imshow("Faces",image)
     cv2.waitKey(0)
 
