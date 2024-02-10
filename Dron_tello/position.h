@@ -7,24 +7,14 @@ namespace dpc
     class grid_coordinates
     {
         private:
-            struct block
-            {
-                long long first_coordinate;
-                long long second_coordinate;
-                long long third_coordinate;
-            };
-            block general_position;
-            struck in_block
-            {
-                double first_coordinate;
-                double second_coordinate;
-                double third_coordinate;
-            };
-            in_block particular_position;
+            long long general_position[3];
+            double particular_position[3];
+            double precisions[3];
+            double angle;
         public:
             int get_coordinate(short coordinate);
             void change_coordinates(short coordinate_system);
-            void update_position(double *move_amount, double time);
+            void update_position(double *move_amount, double delta_time);
     }
 }
 
