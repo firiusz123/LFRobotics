@@ -37,15 +37,15 @@ cam = me.get_frame_read()
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 face_detection = mp_face_detection.FaceDetection()
-
+pg.init()
 
 pid_distance = PID(0.1,0.01,0.1)
 pid_rotation = PID(0.1,0.01,0.1)
 pid_vertical = PID(0.1,0.01,0.1)
+airborne = False
 
 FINISH = False
 MOVE_AMOUNT = 10
-AIRBORNE = False
 ACTIONS = {pg.K_w:me.move_forward,pg.K_d:me.move_right,pg.K_a:me.move_left,pg.K_s:me.move_back}
 DESIRED_WIDTH = 200
 DESIRED_HEIGHT = 300
@@ -55,13 +55,14 @@ CENTER_Y = 0.5
 while True:
     events = pg.event.get()
     for event in events:
+        # Separate key check, so that takeoff/land key cannot be held down
         if event.type == pg.KEYDOWN:
-            if event.key == pg.K_R and not AIRBORNE:
+            if event.key == pg.K_r and not airborne:
                 me.takeoff()
-                AIRBORNE = not AIRBORNE
+                airborne = not airborne
             elif event.key == pg.K_r:
                 me.land()
-                AIRBORNE = not AIRBORNE
+                airborne = not airborne
     keys = pg.key.get_pressed()
     for key in ACTIONS:
         if keys[key]:
@@ -90,7 +91,7 @@ while True:
         
             '''
             # Option where correction happens on every face
-            if AIRBORNE:
+            if airborne:
                 # Here the drone will focus on the face closest to the centre
             
             
@@ -109,7 +110,7 @@ while True:
                 correct_position(distance_correction_factor,me.move_forward,me.move_back)
                 \'''
             '''
-        if AIRBORNE:
+        if airborne:
             # Here the distance correction happens
             height = selected_detection.location_data.relative_bounding_box.height
             width = selected_detection.location_data.relative_bounding_box.width
