@@ -2,6 +2,9 @@ import cv2
 import mediapipe as mp
 from cvzone.HandTrackingModule import HandDetector
 from math import sqrt
+import numpy as np
+from ultralytics import YOLO
+import os
 
 # Video capture set-up
 cap = cv2.VideoCapture(0)
