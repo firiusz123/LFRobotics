@@ -2,6 +2,8 @@ import cv2
 import mediapipe as mp
 from cvzone.HandTrackingModule import HandDetector
 from math import sqrt
+from .Inverse_kinematic_2 import Kinematics 
+import numpy as np
 
 # Video capture set-up
 cap = cv2.VideoCapture(0)
@@ -21,6 +23,14 @@ coff = np.polyfit(x, y, 2)  # Fits the above data to accurately calculate the di
 if not cap.isOpened():
     print("Error opening video capture")
     raise Exception("Video error")
+
+kinematics = Kinematics()
+
+kinematics.add_values([0, 100, 0, 0])
+kinematics.add_values([0, 0, 100, np.radians(90)])
+kinematics.add_values([np.radians(0), 0, 120, 0])
+kinematics.add_values([np.radians(0), 0, 120, 0])
+kinematics.add_values([np.radians(0), 0, 140, 0])
 
 while True:
     r, image = cap.read()
@@ -50,6 +60,9 @@ while True:
     cv2.imshow("Hand distance", img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+    if cv2.waitKey(1) & 0xFF == ord('l'):
+        kinematics.inverse_kinematics_optimization(np.array([x,y,distance]))
+
 
 
 def detect_hands(px,py,pz,image): # First 3 arguments - previous position, the last one is the image that was read
@@ -69,5 +82,3 @@ def detect_hands(px,py,pz,image): # First 3 arguments - previous position, the l
     else:
         return (px,py,pz)
 
-def detect_beer(image):
-    pass
