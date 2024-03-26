@@ -1,10 +1,7 @@
 import cv2
-import mediapipe as mp
 from cvzone.HandTrackingModule import HandDetector
 from math import sqrt
 import numpy as np
-from ultralytics import YOLO
-import os
 
 # Video capture set-up
 cap = cv2.VideoCapture(0)
@@ -44,7 +41,7 @@ while True:
         A,B,C = coff
         distance_in_centimiters = A * distance ** 2 + B * distance + C # After the fit we can calculate the approximate distance
         print(distance_in_centimiters) 
-        cv2.rectangle(img, (x,y),(x + w , y + h))
+        cv2.rectangle(img, (x,y),(x + w , y + h),(255,0,255))
     
     # Beer detection
 
@@ -71,6 +68,3 @@ def detect_hands(px,py,pz,image): # First 3 arguments - previous position, the l
         return (x,y,distance_in_centimiters)
     else:
         return (px,py,pz)
-
-def detect_beer(image):
-    pass

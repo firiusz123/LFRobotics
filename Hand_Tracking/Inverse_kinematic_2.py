@@ -109,19 +109,19 @@ class Kinematics:
 
 # Example usage:
 # Target end-effector position
-target_position = np.array([324.85281, 102.42641, 277.40774] )
+# target_position = np.array([324.85281, 102.42641, 277.40774] )
 
 
-k = Kinematics()
+# k = Kinematics()
 
-# Define DH parameters
-k.add_values([0, 100, 0, 0])
-k.add_values([0, 0, 100, np.radians(90)])
-k.add_values([np.radians(0), 0, 120, 0])
-k.add_values([np.radians(0), 0, 120, 0])
-k.add_values([np.radians(0), 0, 140, 0])
+# # Define DH parameters
+# k.add_values([0, 100, 0, 0])
+# k.add_values([0, 0, 100, np.radians(90)])
+# k.add_values([np.radians(0), 0, 120, 0])
+# k.add_values([np.radians(0), 0, 120, 0])
+# k.add_values([np.radians(0), 0, 140, 0])
 
 
-k.get_transformed_values()
+# k.get_transformed_values()
 
-k.inverse_kinematics_optimization(target_position)
+# k.inverse_kinematics_optimization(target_position)

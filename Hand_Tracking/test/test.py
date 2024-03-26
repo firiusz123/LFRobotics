@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 from cvzone.HandTrackingModule import HandDetector
 from math import sqrt
+import numpy as np
 
 cap = cv2.VideoCapture(0)
 cap.set(3,1280)
@@ -36,7 +37,7 @@ while True:
         A,B,C = coff
         distance_in_centimiters = A * distance ** 2 + B * distance + C
         print(distance_in_centimiters)
-        cv2.rectangle(img, (x,y),(x + w , y + h))
+        cv2.rectangle(img, (x,y),(x + w , y + h),(255,0,255))
     cv2.imshow("Hand distance", img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break

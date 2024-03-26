@@ -32,12 +32,15 @@ def return_correction_factor(value,expected_value,pid):
 me = tello.Tello()
 me.connect()
 me.streamon()
-cam = me.get_frame_read()
+# cam = me.get_frame_read()
 
-mp_face_detection = mp.solutions.face_detection
-mp_drawing = mp.solutions.drawing_utils
-face_detection = mp_face_detection.FaceDetection()
+#mp_face_detection = mp.solutions.face_detection
+#mp_drawing = mp.solutions.drawing_utils
+#face_detection = mp_face_detection.FaceDetection()
 pg.init()
+screen = pg.display.set_mode((300,300))
+pg.display.set_caption("Control")
+
 
 pid_distance = PID(0.1,0.01,0.1)
 pid_rotation = PID(0.1,0.01,0.1)
@@ -51,6 +54,8 @@ DESIRED_WIDTH = 200
 DESIRED_HEIGHT = 300
 CENTER_X = 0.5
 CENTER_Y = 0.5
+
+print("Start")
 
 while True:
     events = pg.event.get()
@@ -69,6 +74,7 @@ while True:
             ACTIONS[key](MOVE_AMOUNT)
     if FINISH:
         break
+    """ 
     image = cam.frame
     cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
     results = face_detection.process(image)
@@ -137,7 +143,7 @@ while True:
     # convert the format sent from the drone
     cv2.imshow("Faces",image)
     cv2.waitKey(0)
-
+    """
 
 me.land()
 cv2.destroyAllWindows()

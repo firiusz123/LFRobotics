@@ -2,7 +2,7 @@ import cv2
 import mediapipe as mp
 from cvzone.HandTrackingModule import HandDetector
 from math import sqrt
-from .Inverse_kinematic_2 import Kinematics 
+from Inverse_kinematic_2 import Kinematics 
 import numpy as np
 
 # Video capture set-up
@@ -24,13 +24,14 @@ if not cap.isOpened():
     print("Error opening video capture")
     raise Exception("Video error")
 
-kinematics = Kinematics()
+k = Kinematics()
 
-kinematics.add_values([0, 100, 0, 0])
-kinematics.add_values([0, 0, 100, np.radians(90)])
-kinematics.add_values([np.radians(0), 0, 120, 0])
-kinematics.add_values([np.radians(0), 0, 120, 0])
-kinematics.add_values([np.radians(0), 0, 140, 0])
+k.add_values([0, 100, 0, 0])
+k.add_values([0, 0, 100, np.radians(90)])
+k.add_values([np.radians(0), 0, 120, 0])
+k.add_values([np.radians(0), 0, 120, 0])
+k.add_values([np.radians(0), 0, 140, 0])
+k.get_transformed_values()
 
 while True:
     r, image = cap.read()
@@ -50,19 +51,15 @@ while True:
         distance = sqrt((x1-x2)**2 + (y1-y2)**2) # Picked two points on the hand and calculates their distance
         A,B,C = coff
         distance_in_centimiters = A * distance ** 2 + B * distance + C # After the fit we can calculate the approximate distance
-        print(distance_in_centimiters) 
-        cv2.rectangle(img, (x,y),(x + w , y + h))
-    
-    # Beer detection
-
-    # Here I will use one of the libraries to train a new model - yolo or pytorch
+        print(np.array([x,y,distance_in_centimiters]))
+        cv2.rectangle(img, (x,y),(x + w , y + h),(255,0,255))
 
     cv2.imshow("Hand distance", img)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
     if cv2.waitKey(1) & 0xFF == ord('l'):
-        kinematics.inverse_kinematics_optimization(np.array([x,y,distance]))
-
+        k.inverse_kinematics_optimization(np.array([x,y,distance_in_centimiters]))
+    
 
 
 def detect_hands(px,py,pz,image): # First 3 arguments - previous position, the last one is the image that was read
@@ -81,4 +78,3 @@ def detect_hands(px,py,pz,image): # First 3 arguments - previous position, the l
         return (x,y,distance_in_centimiters)
     else:
         return (px,py,pz)
-
