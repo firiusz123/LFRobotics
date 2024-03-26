@@ -31,12 +31,13 @@ def return_correction_factor(value,expected_value,pid):
 
 me = tello.Tello()
 me.connect()
-me.streamon()
-# cam = me.get_frame_read()
+#me.streamon()
+#cam = me.get_frame_read()
 
 #mp_face_detection = mp.solutions.face_detection
 #mp_drawing = mp.solutions.drawing_utils
 #face_detection = mp_face_detection.FaceDetection()
+
 pg.init()
 screen = pg.display.set_mode((300,300))
 pg.display.set_caption("Control")
@@ -48,14 +49,13 @@ pid_vertical = PID(0.1,0.01,0.1)
 airborne = False
 
 FINISH = False
-MOVE_AMOUNT = 10
+MOVE_AMOUNT = 40
 ACTIONS = {pg.K_w:me.move_forward,pg.K_d:me.move_right,pg.K_a:me.move_left,pg.K_s:me.move_back}
 DESIRED_WIDTH = 200
 DESIRED_HEIGHT = 300
 CENTER_X = 0.5
 CENTER_Y = 0.5
 
-print("Start")
 
 while True:
     events = pg.event.get()
@@ -70,13 +70,13 @@ while True:
                 airborne = not airborne
     keys = pg.key.get_pressed()
     for key in ACTIONS:
-        if keys[key]:
+        if keys[key] and airborne:
             ACTIONS[key](MOVE_AMOUNT)
     if FINISH:
-        break
-    """ 
-    image = cam.frame
-    cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+        break 
+    #image = cam.frame
+    #cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+    """
     results = face_detection.process(image)
     if results.detections:
         
@@ -141,9 +141,9 @@ while True:
             
     # While testing live an issue showed up here - cv2 refuses to
     # convert the format sent from the drone
-    cv2.imshow("Faces",image)
-    cv2.waitKey(0)
     """
+    #cv2.imshow("Faces",image)
+    # cv2.waitKey(0)
 
 me.land()
 cv2.destroyAllWindows()
