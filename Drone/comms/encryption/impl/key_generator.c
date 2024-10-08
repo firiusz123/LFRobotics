@@ -1,6 +1,16 @@
 #include "../headers/key_generator.h"
 
-int main()
+// Gets current time (we could define a counter similar to millis() in arduino)
+ulli NRNG()
 {
-    return 0;
+}
+
+// USE FOR TESTING ONLY!!!
+ulli RNG(ulli seed)
+{
+}
+
+// Generates a cryptografic key for encryption
+char *GenerateKey(ulli seed, Buffer *key_buffer, usi random_mode)
+{
 }
