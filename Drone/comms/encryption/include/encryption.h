@@ -43,6 +43,8 @@ Message DecryptMessage(Message *message, unsigned char *originalKey);
 
 void AES_Decrypt(unsigned char *encrypted, unsigned char *RoundKey, unsigned char *decrypted);
 
+unsigned char UCharMultiply(unsigned char x, unsigned char y);
+
 void KeyExpansion(unsigned char *key, unsigned char *RoundKey);
 
 void AddRoundKey(AES_State *state, unsigned char *RoundKey);

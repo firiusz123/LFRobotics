@@ -142,6 +142,18 @@ void SubBytes(AES_State *state)
     }
 }
 
+// Invert the substitution bytes
+void InvSubBytes(AES_State *state)
+{
+    for (usi r = 0; r < 4; r++)
+    {
+        for (usi c = 0; c < AES_NB; c++)
+        {
+            state->state[r][c] = rsbox[state->state[r][c]];
+        }
+    }
+}
+
 /* Shift rows
    1. ff ee dd cc -> ee dd cc ff
    2. ff ee dd cc -> dd cc ff ee
@@ -176,7 +188,7 @@ void ShiftRows(AES_State *state)
 
 /* xtime operation for MixColumns, basically magic, but it does this:
     (each letter is a bit)
-    qwertyui -> (i0000000 XOR ( ( 0000000q AND 00000001 ) * 00011011 ) )
+    qwertyui -> (wertyui0 XOR ( ( 0000000q AND 00000001 ) * 00011011 ) )
 */
 unsigned char xtime(unsigned char x)
 {
@@ -206,19 +218,27 @@ void MixColumns(AES_State *state)
     }
 }
 
-// Invert the substitution bytes
-void InvSubBytes(AES_State *state)
+// InvMixColumns step
+void InvMixColumns(AES_State *state)
 {
-    for (usi r = 0; r < 4; r++)
+    unsigned char a, b, c, d;
+    for (usi c_col = 0; c_col < AES_NB; c_col++)
     {
-        for (usi c = 0; c < AES_NB; c++)
-        {
-            state->state[r][c] = sbox[state->state[r][c]];
-        }
+        a = state->state[0][c_col];
+        b = state->state[1][c_col];
+        c = state->state[2][c_col];
+        d = state->state[3][c_col];
+
+        state->state[0][c_col] = UCharMultiply(a, (unsigned char)0x0e) ^ UCharMultiply(b, (unsigned char)0x0b) ^ UCharMultiply(c, (unsigned char)0x0d) ^ UCharMultiply(d, (unsigned char)0x09);
+        state->state[1][c_col] = UCharMultiply(a, (unsigned char)0x09) ^ UCharMultiply(b, (unsigned char)0x0e) ^ UCharMultiply(c, (unsigned char)0x0b) ^ UCharMultiply(d, (unsigned char)0x0d);
+        state->state[2][c_col] = UCharMultiply(a, (unsigned char)0x0d) ^ UCharMultiply(b, (unsigned char)0x09) ^ UCharMultiply(c, (unsigned char)0x0e) ^ UCharMultiply(d, (unsigned char)0x0b);
+        state->state[3][c_col] = UCharMultiply(a, (unsigned char)0x0b) ^ UCharMultiply(b, (unsigned char)0x0d) ^ UCharMultiply(c, (unsigned char)0x09) ^ UCharMultiply(d, (unsigned char)0x0e);
     }
 }
 
-/* InvShiftRows step`
+
+
+/* InvShiftRows step
    1. ff ee dd cc <- ee dd cc ff
    2. ff ee dd cc <- dd cc ff ee
    3. ff ee dd cc <- cc ff ee dd
@@ -248,7 +268,7 @@ void InvShiftRows(AES_State *state)
 }
 
 // Galois Field multiplication (in 256 bit field with + - * ^-1)
-unsigned char Multiply(unsigned char x, unsigned char y)
+unsigned char UCharMultiply(unsigned char x, unsigned char y)
 {
     unsigned char result = 0;
     unsigned char temp = x;
@@ -265,24 +285,6 @@ unsigned char Multiply(unsigned char x, unsigned char y)
     }
 
     return result;
-}
-
-// InvMixColumns step
-void InvMixColumns(AES_State *state)
-{
-    unsigned char a, b, c, d;
-    for (usi c_col = 0; c_col < AES_NB; c_col++)
-    {
-        a = state->state[0][c_col];
-        b = state->state[1][c_col];
-        c = state->state[2][c_col];
-        d = state->state[3][c_col];
-
-        state->state[0][c_col] = Multiply(a, 0x0e) ^ Multiply(b, 0x0b) ^ Multiply(c, 0x0d) ^ Multiply(d, 0x09);
-        state->state[1][c_col] = Multiply(a, 0x09) ^ Multiply(b, 0x0e) ^ Multiply(c, 0x0b) ^ Multiply(d, 0x0d);
-        state->state[2][c_col] = Multiply(a, 0x0d) ^ Multiply(b, 0x09) ^ Multiply(c, 0x0e) ^ Multiply(d, 0x0b);
-        state->state[3][c_col] = Multiply(a, 0x0b) ^ Multiply(b, 0x0d) ^ Multiply(c, 0x09) ^ Multiply(d, 0x0e);
-    }
 }
 
 // Initialize AES State from message
@@ -395,7 +397,7 @@ Message EncryptMessage(Message *message, unsigned char *originalKey)
     }
     for (usi i = 0; i < AES_BLOCK_SIZE; i++)
     {
-        encrypted_message.message_body[i] = (char)ciphertext[i];
+        encrypted_message.message_body[i] = (unsigned char)ciphertext[i];
     }
     free(RoundKey);
     // return *encrypted_message;
