@@ -1,8 +1,9 @@
 // encryption.c
-#include "../headers/encryption.h"
-#include "../headers/key_generator.h"
+#include "../include/encryption.h"
+#include "../include/key_generator.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 // AES constants for AES-256
 #define AES_KEY_SIZE 32   // 256 bits
 #define AES_BLOCK_SIZE 16 // 128 bits
@@ -87,9 +88,9 @@ void KeyExpansion(unsigned char *key, unsigned char *RoundKey)
     }
 
     unsigned char temp[4];
-    ulli i_key = AES_NK * 4;
+    usi i_key = AES_NK * 4;
 
-    while (i_key < AES_NB * (AES_NR + 1) * 4)
+    while (i_key < AES_NB * (AES_NR + 1) * AES_NB)
     {
         // Copy the previous 4 bytes into temp
         for (usi i = 0; i < 4; i++)
@@ -120,11 +121,11 @@ void KeyExpansion(unsigned char *key, unsigned char *RoundKey)
 void AddRoundKey(AES_State *state, unsigned char *RoundKey)
 {
 
-    for (usi c = 0; c < AES_NB; c++)
+    for (usi column = 0; column < AES_NB; column++)
     {
-        for (usi r = 0; r < 4; r++)
+        for (usi row = 0; row < 4; row++)
         {
-            state->state[r][c] ^= RoundKey[c * 4 + r];
+            state->state[row][column] ^= RoundKey[column * 4 + row];
         }
     }
 }
@@ -359,20 +360,20 @@ void AES_Decrypt(unsigned char *encrypted, unsigned char *RoundKey, unsigned cha
 // Encrypt Message
 Message EncryptMessage(Message *message, unsigned char *originalKey)
 {
-    Message *encrypted_message;
-    unsigned char RoundKey[AES_BLOCK_SIZE * (AES_NR + 1)]; // 16 * 15 = 240 bytes for AES-256
-
+    Message encrypted_message;
+    unsigned char *RoundKey; // 16 * 15 = 240 bytes for AES-256
+    RoundKey = (unsigned char *)malloc(AES_BLOCK_SIZE * AES_BLOCK_SIZE * (+1));
     // Key Expansion
     KeyExpansion(originalKey, RoundKey);
 
-    // Ensure message size is 16 bytes (AES block size)
-    // Implement padding if necessary (e.g., PKCS#7)
-    usi status = PKCS7_Padding(message->message_body, message->message_size, encrypted_message->message_body, message->message_size + (16 - (message->message_size % 16)));
-    // if (status == -1)
-    // {
-    //// Should add some error handling...
-    //     return;
-    // }
+    // // Ensure message size is 16 bytes (AES block size)
+    // // Implement padding if necessary (e.g., PKCS#7)
+    usi status = PKCS7_Padding(message->message_body, message->message_size, &encrypted_message.message_body, message->message_size + (16 - (message->message_size % 16)));
+    // // if (status == -1)
+    // // {
+    // //// Should add some error handling...
+    // //     return;
+    // // }
     unsigned char plaintext[AES_BLOCK_SIZE] = {0};
     for (usi i = 0; i < AES_BLOCK_SIZE && i < message->message_size; i++)
     {
@@ -382,30 +383,31 @@ Message EncryptMessage(Message *message, unsigned char *originalKey)
     unsigned char ciphertext[AES_BLOCK_SIZE] = {0};
     AES_Encrypt(plaintext, RoundKey, ciphertext);
 
-    // Prepare encrypted message
-    encrypted_message->message_size = AES_BLOCK_SIZE;
-    encrypted_message->message_body = (char *)malloc(AES_BLOCK_SIZE);
-    if (encrypted_message->message_body == NULL)
+    // // Prepare encrypted message
+    encrypted_message.message_size = AES_BLOCK_SIZE;
+    encrypted_message.message_body = (unsigned char *)malloc(AES_BLOCK_SIZE);
+    if (encrypted_message.message_body == NULL)
     {
         // Handle malloc failure
         // For now, set size to 0
-        encrypted_message->message_size = 0;
-        return *encrypted_message;
+        encrypted_message.message_size = 0;
+        return encrypted_message;
     }
     for (usi i = 0; i < AES_BLOCK_SIZE; i++)
     {
-        encrypted_message->message_body[i] = (char)ciphertext[i];
+        encrypted_message.message_body[i] = (char)ciphertext[i];
     }
-
-    return *encrypted_message;
+    free(RoundKey);
+    // return *encrypted_message;
+    return encrypted_message;
 }
 
 // Decrypt Message
 Message DecryptMessage(Message *message, unsigned char *originalKey)
 {
-    Message *decrypted_message;
-    unsigned char RoundKey[AES_BLOCK_SIZE * (AES_NR + 1)]; // 16 * 15 = 240 bytes for AES-256
-
+    Message decrypted_message;
+    unsigned char *RoundKey; // 16 * 15 = 240 bytes for AES-256
+    RoundKey = (unsigned char *)malloc(AES_BLOCK_SIZE * AES_BLOCK_SIZE * (+1));
     // Key Expansion
     KeyExpansion(originalKey, RoundKey);
 
@@ -419,21 +421,22 @@ Message DecryptMessage(Message *message, unsigned char *originalKey)
     AES_Decrypt(ciphertext, RoundKey, plaintext);
 
     // Prepare decrypted message
-    decrypted_message->message_size = AES_BLOCK_SIZE;
-    decrypted_message->message_body = (char *)malloc(AES_BLOCK_SIZE);
-    if (decrypted_message->message_body == NULL)
+    decrypted_message.message_size = AES_BLOCK_SIZE;
+    decrypted_message.message_body = (unsigned char *)malloc(AES_BLOCK_SIZE);
+    if (decrypted_message.message_body == NULL)
     {
         // Handle malloc failure
-        decrypted_message->message_size = 0;
-        return *decrypted_message;
+        decrypted_message.message_size = 0;
+        return decrypted_message;
     }
     for (usi i = 0; i < AES_BLOCK_SIZE; i++)
     {
-        decrypted_message->message_body[i] = (char)plaintext[i];
+        decrypted_message.message_body[i] = (char)plaintext[i];
     }
-    Message *final_message;
-    PKCS7_Unpadding(decrypted_message->message_body, decrypted_message->message_size, final_message->message_body);
-    return *decrypted_message;
+    Message *final_message = (Message *)malloc(8); // Message size
+    final_message->message_body = (unsigned char *)malloc(AES_BLOCK_SIZE);
+    PKCS7_Unpadding(decrypted_message.message_body, decrypted_message.message_size, final_message->message_body);
+    return decrypted_message;
 }
 
 // Function to apply PKCS#7 padding

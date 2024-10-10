@@ -13,19 +13,20 @@
 
 typedef struct
 {
-    char data[BUFFER_SIZE];
+    unsigned char key[BUFFER_SIZE];
     volatile char connection_established;
+    usi key_size;
 } Buffer;
 
 // Of course we should avoid using libraries unless absolutely neccessary
 
 // Returns 0 when key has been written in the buffer and is ready to be used
-usi GenerateKey(ulli seed, char *key_write_buffer, usi random_mode);
+void GenerateKey(ulli seed, Buffer *key_write_buffer, usi random_mode);
 
 // Simplest rng
-ulli RNG(ulli seed);
+unsigned char RNG(ulli seed);
 
 // Noise rng, here seed is optional
-ulli NRNG(ulli seed);
+unsigned char NRNG();
 
 #endif

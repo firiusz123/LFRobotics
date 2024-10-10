@@ -15,13 +15,13 @@
 
 typedef struct
 {
-    char *key_body;
+    unsigned char *key_body;
     usi key_size;
 } Key;
 
 typedef struct
 {
-    char *message_body;
+    unsigned char *message_body;
     usi message_size;
 } Message;
 // Define AES block size and key size
