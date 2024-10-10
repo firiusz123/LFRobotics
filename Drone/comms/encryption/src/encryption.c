@@ -236,8 +236,6 @@ void InvMixColumns(AES_State *state)
     }
 }
 
-
-
 /* InvShiftRows step
    1. ff ee dd cc <- ee dd cc ff
    2. ff ee dd cc <- dd cc ff ee
@@ -360,7 +358,7 @@ void AES_Decrypt(unsigned char *encrypted, unsigned char *RoundKey, unsigned cha
 }
 
 // Encrypt Message
-Message EncryptMessage(Message *message, unsigned char *originalKey)
+Message EncryptChunk(Message *message, unsigned char *originalKey)
 {
     Message encrypted_message;
     unsigned char *RoundKey; // 16 * 15 = 240 bytes for AES-256
@@ -405,7 +403,7 @@ Message EncryptMessage(Message *message, unsigned char *originalKey)
 }
 
 // Decrypt Message
-Message DecryptMessage(Message *message, unsigned char *originalKey)
+Message DecryptChunk(Message *message, unsigned char *originalKey)
 {
     Message decrypted_message;
     unsigned char *RoundKey; // 16 * 15 = 240 bytes for AES-256
@@ -482,4 +480,70 @@ usi PKCS7_Unpadding(unsigned char *padded_data, usi padded_size, unsigned char *
 
     memcpy(data, padded_data, padded_size - pad_len);
     return padded_size - pad_len;
+}
+
+Message DecryptMessage(Message *message, unsigned char *key)
+{
+    usi pointer = 0;
+    Message encrypted;
+    encrypted.message_size = message->message_size;
+    encrypted.message_body = (unsigned char *)malloc(message->message_size);
+    while (pointer < message->message_size)
+    {
+        unsigned char table[16] = {0};
+        for (int j = pointer; j < pointer + AES_BLOCK_SIZE; j++)
+        {
+            if (j > message->message_size)
+            {
+                table[j % AES_BLOCK_SIZE] = 0;
+                continue;
+            }
+            table[j % AES_BLOCK_SIZE] = message->message_body[j];
+        }
+        Message block;
+        block.message_body = (unsigned char *)table;
+        block.message_size = AES_BLOCK_SIZE;
+        Message ciphertext = DecryptChunk(&block, key);
+        for (usi i = 0; i < AES_BLOCK_SIZE; i++)
+        {
+            encrypted.message_body[pointer + i] = ciphertext.message_body[i];
+            // printf("%02x ", (unsigned char)ciphertext.message_body[i]);
+        }
+        pointer += AES_BLOCK_SIZE;
+    }
+    printf("\n");
+    return encrypted;
+}
+
+Message EncryptMessage(Message *message, unsigned char *key)
+{
+    usi pointer = 0;
+    Message encrypted;
+    encrypted.message_size = message->message_size;
+    encrypted.message_body = (unsigned char *)malloc(message->message_size);
+    while (pointer < message->message_size)
+    {
+        unsigned char table[16] = {0};
+        for (int j = pointer; j < pointer + AES_BLOCK_SIZE; j++)
+        {
+            if (j > message->message_size)
+            {
+                table[j % AES_BLOCK_SIZE] = 0;
+                continue;
+            }
+            table[j % AES_BLOCK_SIZE] = message->message_body[j];
+        }
+        Message block;
+        block.message_body = (unsigned char *)table;
+        block.message_size = AES_BLOCK_SIZE;
+        Message ciphertext = EncryptChunk(&block, key);
+        for (usi i = 0; i < AES_BLOCK_SIZE; i++)
+        {
+            encrypted.message_body[pointer + i] = ciphertext.message_body[i];
+            // printf("%02x ", (unsigned char)ciphertext.message_body[i]);
+        }
+        pointer += AES_BLOCK_SIZE;
+    }
+    printf("\n");
+    return encrypted;
 }
