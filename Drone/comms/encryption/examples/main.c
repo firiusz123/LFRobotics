@@ -21,8 +21,8 @@ int main()
         0x3b, 0x61, 0x08, 0xd7,
         0x2d, 0x98, 0x10, 0xa3,
         0x09, 0x14, 0xdf, 0xf4};
-    // Buffer *key_buffer = (Buffer *)malloc(sizeof(unsigned char) * AES_KEY_SIZE + sizeof(usi));
-    // GenerateKey(122, key_buffer, 1);
+    Buffer *key_buffer = (Buffer *)malloc(sizeof(*key_buffer));
+    GenerateKey(122, key_buffer, 1);
     // memcpy(key_buffer->key, key, sizeof(char) * 32);
     // unsigned char key[AES_KEY_SIZE] = GenerateKey()
     // Example plaintext (16 bytes for AES block)
@@ -36,7 +36,7 @@ int main()
     plaintext.message_body = (unsigned char *)plaintext_bytes;
     printf("Starting the encryption\n");
     // Encrypt
-    Message ciphertext = EncryptMessage(&plaintext, key);
+    Message ciphertext = EncryptMessage(&plaintext, key_buffer->key);
     printf("Encrypted message:\n");
     for (int i = 0; i < ciphertext.message_size; i++)
     {
@@ -47,7 +47,7 @@ int main()
     // Expected ciphertext: f3 ee d1 bd b5 d2 a0 3c 06 4b 5a 7e 3d b1 81 f8
 
     // Decrypt
-    Message decrypted = DecryptMessage(&ciphertext, key);
+    Message decrypted = DecryptMessage(&ciphertext, key_buffer->key);
     printf("Decrypted message:\n");
     for (int i = 0; i < decrypted.message_size; i++)
     {

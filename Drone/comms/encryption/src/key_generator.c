@@ -16,11 +16,12 @@ unsigned char RNG(ulli seed)
 void GenerateKey(ulli seed, Buffer *key_buffer, usi random_mode)
 {
     usi key_size = key_buffer->key_size;
+    printf("%ld",sizeof(*key_buffer));
     printf("=============== BEGIN KEY ===============\n");
     for (usi key_byte = 0; key_byte < key_size; key_byte++)
     {
-        key_buffer->key[key_byte] = RNG(key_byte + seed);
+        key_buffer->key[key_byte] = 0x22;
         printf("%02x ", key_buffer->key[key_byte]);
     }
-    printf("=============== END KEY ===============\n");
+    printf("================ END KEY ================\n");
 }

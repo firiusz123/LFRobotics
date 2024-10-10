@@ -165,3 +165,5 @@ Hand_tracking/Data/data.yaml
 
 .idea/
 .vscode/
+
+*.swp

@@ -13,9 +13,9 @@
 
 typedef struct
 {
-    unsigned char key[BUFFER_SIZE];
-    volatile char connection_established;
-    usi key_size;
+    unsigned char key[BUFFER_SIZE]; // ???
+    volatile char connection_established; // Size of 1
+    usi key_size; // Size of 2 
 } Buffer;
 
 // Of course we should avoid using libraries unless absolutely neccessary
