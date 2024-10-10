@@ -1,15 +1,16 @@
 // main.c (Example usage)
-#include "../headers/encryption.h"
-#include "../headers/key_generator.h"
+#include "../include/encryption.h"
+#include "../include/key_generator.h"
 #include <stdio.h>
 #include <string.h>
-
+#include <stdlib.h>
 #ifndef AES_KEY_SIZE
 #define AES_KEY_SIZE 32
 #endif
 
 int main()
 {
+    printf("Setting the key\n");
     // Example key (32 bytes for AES-256)
     unsigned char key[AES_KEY_SIZE] = {
         0x60, 0x3d, 0xeb, 0x10,
@@ -20,6 +21,9 @@ int main()
         0x3b, 0x61, 0x08, 0xd7,
         0x2d, 0x98, 0x10, 0xa3,
         0x09, 0x14, 0xdf, 0xf4};
+    // Buffer *key_buffer = (Buffer *)malloc(sizeof(unsigned char) * AES_KEY_SIZE + sizeof(usi));
+    // GenerateKey(122, key_buffer, 1);
+    // memcpy(key_buffer->key, key, sizeof(char) * 32);
     // unsigned char key[AES_KEY_SIZE] = GenerateKey()
     // Example plaintext (16 bytes for AES block)
     unsigned char plaintext_bytes[AES_BLOCK_SIZE] = {
@@ -29,10 +33,10 @@ int main()
         0x73, 0x93, 0x17, 0x2a};
     Message plaintext;
     plaintext.message_size = AES_BLOCK_SIZE;
-    plaintext.message_body = (char *)plaintext_bytes;
-
+    plaintext.message_body = (unsigned char *)plaintext_bytes;
+    printf("Starting the encryption\n");
     // Encrypt
-    Message ciphertext = EncryptMessage(plaintext, key);
+    Message ciphertext = EncryptMessage(&plaintext, key);
     printf("Encrypted message:\n");
     for (int i = 0; i < ciphertext.message_size; i++)
     {
@@ -43,11 +47,16 @@ int main()
     // Expected ciphertext: f3 ee d1 bd b5 d2 a0 3c 06 4b 5a 7e 3d b1 81 f8
 
     // Decrypt
-    Message decrypted = DecryptMessage(ciphertext, key);
+    Message decrypted = DecryptMessage(&ciphertext, key);
     printf("Decrypted message:\n");
     for (int i = 0; i < decrypted.message_size; i++)
     {
         printf("%02x ", (unsigned char)decrypted.message_body[i]);
+    }
+    printf("\n");
+    for (int i = 0; i < plaintext.message_size;i++)
+    {
+        printf("%02x ", (unsigned char)plaintext.message_body[i]);
     }
     printf("\n");
 
@@ -55,8 +64,8 @@ int main()
     // 6b c1 be e2 2e 40 9f 96 e9 3d 7e 11 73 93 17 2a
 
     // Free allocated memory
-    free(ciphertext.message_body);
-    free(decrypted.message_body);
+    // free(ciphertext.message_body);
+    // free(decrypted.message_body);
 
     return 0;
 }

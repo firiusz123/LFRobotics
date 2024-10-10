@@ -15,13 +15,13 @@
 
 typedef struct
 {
-    char *key_body;
+    unsigned char *key_body;
     usi key_size;
 } Key;
 
 typedef struct
 {
-    char *message_body;
+    unsigned char *message_body;
     usi message_size;
 } Message;
 // Define AES block size and key size
@@ -42,6 +42,8 @@ void AES_Encrypt(unsigned char *message, unsigned char *RoundKey, unsigned char 
 Message DecryptMessage(Message *message, unsigned char *originalKey);
 
 void AES_Decrypt(unsigned char *encrypted, unsigned char *RoundKey, unsigned char *decrypted);
+
+unsigned char UCharMultiply(unsigned char x, unsigned char y);
 
 void KeyExpansion(unsigned char *key, unsigned char *RoundKey);
 
