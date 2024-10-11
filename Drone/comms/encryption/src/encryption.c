@@ -1,8 +1,9 @@
 // encryption.c
-#include "../headers/encryption.h"
-#include "../headers/key_generator.h"
+#include "../include/encryption.h"
+#include "../include/key_generator.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 // AES constants for AES-256
 #define AES_KEY_SIZE 32   // 256 bits
 #define AES_BLOCK_SIZE 16 // 128 bits
@@ -87,9 +88,9 @@ void KeyExpansion(unsigned char *key, unsigned char *RoundKey)
     }
 
     unsigned char temp[4];
-    ulli i_key = AES_NK * 4;
+    usi i_key = AES_NK * 4;
 
-    while (i_key < AES_NB * (AES_NR + 1) * 4)
+    while (i_key < AES_NB * (AES_NR + 1) * AES_NB)
     {
         // Copy the previous 4 bytes into temp
         for (usi i = 0; i < 4; i++)
@@ -120,11 +121,11 @@ void KeyExpansion(unsigned char *key, unsigned char *RoundKey)
 void AddRoundKey(AES_State *state, unsigned char *RoundKey)
 {
 
-    for (usi c = 0; c < AES_NB; c++)
+    for (usi column = 0; column < AES_NB; column++)
     {
-        for (usi r = 0; r < 4; r++)
+        for (usi row = 0; row < 4; row++)
         {
-            state->state[r][c] ^= RoundKey[c * 4 + r];
+            state->state[row][column] ^= RoundKey[column * 4 + row];
         }
     }
 }
@@ -137,6 +138,18 @@ void SubBytes(AES_State *state)
         for (usi c = 0; c < AES_NB; c++)
         {
             state->state[r][c] = sbox[state->state[r][c]];
+        }
+    }
+}
+
+// Invert the substitution bytes
+void InvSubBytes(AES_State *state)
+{
+    for (usi r = 0; r < 4; r++)
+    {
+        for (usi c = 0; c < AES_NB; c++)
+        {
+            state->state[r][c] = rsbox[state->state[r][c]];
         }
     }
 }
@@ -175,7 +188,7 @@ void ShiftRows(AES_State *state)
 
 /* xtime operation for MixColumns, basically magic, but it does this:
     (each letter is a bit)
-    qwertyui -> (i0000000 XOR ( ( 0000000q AND 00000001 ) * 00011011 ) )
+    qwertyui -> (wertyui0 XOR ( ( 0000000q AND 00000001 ) * 00011011 ) )
 */
 unsigned char xtime(unsigned char x)
 {
@@ -205,19 +218,25 @@ void MixColumns(AES_State *state)
     }
 }
 
-// Invert the substitution bytes
-void InvSubBytes(AES_State *state)
+// InvMixColumns step
+void InvMixColumns(AES_State *state)
 {
-    for (usi r = 0; r < 4; r++)
+    unsigned char a, b, c, d;
+    for (usi c_col = 0; c_col < AES_NB; c_col++)
     {
-        for (usi c = 0; c < AES_NB; c++)
-        {
-            state->state[r][c] = sbox[state->state[r][c]];
-        }
+        a = state->state[0][c_col];
+        b = state->state[1][c_col];
+        c = state->state[2][c_col];
+        d = state->state[3][c_col];
+
+        state->state[0][c_col] = UCharMultiply(a, (unsigned char)0x0e) ^ UCharMultiply(b, (unsigned char)0x0b) ^ UCharMultiply(c, (unsigned char)0x0d) ^ UCharMultiply(d, (unsigned char)0x09);
+        state->state[1][c_col] = UCharMultiply(a, (unsigned char)0x09) ^ UCharMultiply(b, (unsigned char)0x0e) ^ UCharMultiply(c, (unsigned char)0x0b) ^ UCharMultiply(d, (unsigned char)0x0d);
+        state->state[2][c_col] = UCharMultiply(a, (unsigned char)0x0d) ^ UCharMultiply(b, (unsigned char)0x09) ^ UCharMultiply(c, (unsigned char)0x0e) ^ UCharMultiply(d, (unsigned char)0x0b);
+        state->state[3][c_col] = UCharMultiply(a, (unsigned char)0x0b) ^ UCharMultiply(b, (unsigned char)0x0d) ^ UCharMultiply(c, (unsigned char)0x09) ^ UCharMultiply(d, (unsigned char)0x0e);
     }
 }
 
-/* InvShiftRows step`
+/* InvShiftRows step
    1. ff ee dd cc <- ee dd cc ff
    2. ff ee dd cc <- dd cc ff ee
    3. ff ee dd cc <- cc ff ee dd
@@ -247,7 +266,7 @@ void InvShiftRows(AES_State *state)
 }
 
 // Galois Field multiplication (in 256 bit field with + - * ^-1)
-unsigned char Multiply(unsigned char x, unsigned char y)
+unsigned char UCharMultiply(unsigned char x, unsigned char y)
 {
     unsigned char result = 0;
     unsigned char temp = x;
@@ -264,24 +283,6 @@ unsigned char Multiply(unsigned char x, unsigned char y)
     }
 
     return result;
-}
-
-// InvMixColumns step
-void InvMixColumns(AES_State *state)
-{
-    unsigned char a, b, c, d;
-    for (usi c_col = 0; c_col < AES_NB; c_col++)
-    {
-        a = state->state[0][c_col];
-        b = state->state[1][c_col];
-        c = state->state[2][c_col];
-        d = state->state[3][c_col];
-
-        state->state[0][c_col] = Multiply(a, 0x0e) ^ Multiply(b, 0x0b) ^ Multiply(c, 0x0d) ^ Multiply(d, 0x09);
-        state->state[1][c_col] = Multiply(a, 0x09) ^ Multiply(b, 0x0e) ^ Multiply(c, 0x0b) ^ Multiply(d, 0x0d);
-        state->state[2][c_col] = Multiply(a, 0x0d) ^ Multiply(b, 0x09) ^ Multiply(c, 0x0e) ^ Multiply(d, 0x0b);
-        state->state[3][c_col] = Multiply(a, 0x0b) ^ Multiply(b, 0x0d) ^ Multiply(c, 0x09) ^ Multiply(d, 0x0e);
-    }
 }
 
 // Initialize AES State from message
@@ -357,22 +358,22 @@ void AES_Decrypt(unsigned char *encrypted, unsigned char *RoundKey, unsigned cha
 }
 
 // Encrypt Message
-Message EncryptMessage(Message *message, unsigned char *originalKey)
+Message EncryptChunk(Message *message, unsigned char *originalKey)
 {
-    Message *encrypted_message;
-    unsigned char RoundKey[AES_BLOCK_SIZE * (AES_NR + 1)]; // 16 * 15 = 240 bytes for AES-256
-
+    Message encrypted_message;
+    unsigned char *RoundKey; // 16 * 15 = 240 bytes for AES-256
+    RoundKey = (unsigned char *)malloc(AES_BLOCK_SIZE * AES_BLOCK_SIZE * (+1));
     // Key Expansion
     KeyExpansion(originalKey, RoundKey);
 
-    // Ensure message size is 16 bytes (AES block size)
-    // Implement padding if necessary (e.g., PKCS#7)
-    usi status = PKCS7_Padding(message->message_body, message->message_size, encrypted_message->message_body, message->message_size + (16 - (message->message_size % 16)));
-    // if (status == -1)
-    // {
-    //// Should add some error handling...
-    //     return;
-    // }
+    // // Ensure message size is 16 bytes (AES block size)
+    // // Implement padding if necessary (e.g., PKCS#7)
+    usi status = PKCS7_Padding(message->message_body, message->message_size, &encrypted_message.message_body, message->message_size + (16 - (message->message_size % 16)));
+    // // if (status == -1)
+    // // {
+    // //// Should add some error handling...
+    // //     return;
+    // // }
     unsigned char plaintext[AES_BLOCK_SIZE] = {0};
     for (usi i = 0; i < AES_BLOCK_SIZE && i < message->message_size; i++)
     {
@@ -382,30 +383,31 @@ Message EncryptMessage(Message *message, unsigned char *originalKey)
     unsigned char ciphertext[AES_BLOCK_SIZE] = {0};
     AES_Encrypt(plaintext, RoundKey, ciphertext);
 
-    // Prepare encrypted message
-    encrypted_message->message_size = AES_BLOCK_SIZE;
-    encrypted_message->message_body = (char *)malloc(AES_BLOCK_SIZE);
-    if (encrypted_message->message_body == NULL)
+    // // Prepare encrypted message
+    encrypted_message.message_size = AES_BLOCK_SIZE;
+    encrypted_message.message_body = (unsigned char *)malloc(AES_BLOCK_SIZE);
+    if (encrypted_message.message_body == NULL)
     {
         // Handle malloc failure
         // For now, set size to 0
-        encrypted_message->message_size = 0;
-        return *encrypted_message;
+        encrypted_message.message_size = 0;
+        return encrypted_message;
     }
     for (usi i = 0; i < AES_BLOCK_SIZE; i++)
     {
-        encrypted_message->message_body[i] = (char)ciphertext[i];
+        encrypted_message.message_body[i] = (unsigned char)ciphertext[i];
     }
-
-    return *encrypted_message;
+    free(RoundKey);
+    // return *encrypted_message;
+    return encrypted_message;
 }
 
 // Decrypt Message
-Message DecryptMessage(Message *message, unsigned char *originalKey)
+Message DecryptChunk(Message *message, unsigned char *originalKey)
 {
-    Message *decrypted_message;
-    unsigned char RoundKey[AES_BLOCK_SIZE * (AES_NR + 1)]; // 16 * 15 = 240 bytes for AES-256
-
+    Message decrypted_message;
+    unsigned char *RoundKey; // 16 * 15 = 240 bytes for AES-256
+    RoundKey = (unsigned char *)malloc(AES_BLOCK_SIZE * AES_BLOCK_SIZE * (+1));
     // Key Expansion
     KeyExpansion(originalKey, RoundKey);
 
@@ -419,21 +421,22 @@ Message DecryptMessage(Message *message, unsigned char *originalKey)
     AES_Decrypt(ciphertext, RoundKey, plaintext);
 
     // Prepare decrypted message
-    decrypted_message->message_size = AES_BLOCK_SIZE;
-    decrypted_message->message_body = (char *)malloc(AES_BLOCK_SIZE);
-    if (decrypted_message->message_body == NULL)
+    decrypted_message.message_size = AES_BLOCK_SIZE;
+    decrypted_message.message_body = (unsigned char *)malloc(AES_BLOCK_SIZE);
+    if (decrypted_message.message_body == NULL)
     {
         // Handle malloc failure
-        decrypted_message->message_size = 0;
-        return *decrypted_message;
+        decrypted_message.message_size = 0;
+        return decrypted_message;
     }
     for (usi i = 0; i < AES_BLOCK_SIZE; i++)
     {
-        decrypted_message->message_body[i] = (char)plaintext[i];
+        decrypted_message.message_body[i] = (char)plaintext[i];
     }
-    Message *final_message;
-    PKCS7_Unpadding(decrypted_message->message_body, decrypted_message->message_size, final_message->message_body);
-    return *decrypted_message;
+    Message *final_message = (Message *)malloc(8); // Message size
+    final_message->message_body = (unsigned char *)malloc(AES_BLOCK_SIZE);
+    PKCS7_Unpadding(decrypted_message.message_body, decrypted_message.message_size, final_message->message_body);
+    return decrypted_message;
 }
 
 // Function to apply PKCS#7 padding
@@ -477,4 +480,70 @@ usi PKCS7_Unpadding(unsigned char *padded_data, usi padded_size, unsigned char *
 
     memcpy(data, padded_data, padded_size - pad_len);
     return padded_size - pad_len;
+}
+
+Message DecryptMessage(Message *message, unsigned char *key)
+{
+    usi pointer = 0;
+    Message encrypted;
+    encrypted.message_size = message->message_size;
+    encrypted.message_body = (unsigned char *)malloc(message->message_size);
+    while (pointer < message->message_size)
+    {
+        unsigned char table[16] = {0};
+        for (int j = pointer; j < pointer + AES_BLOCK_SIZE; j++)
+        {
+            if (j > message->message_size)
+            {
+                table[j % AES_BLOCK_SIZE] = 0;
+                continue;
+            }
+            table[j % AES_BLOCK_SIZE] = message->message_body[j];
+        }
+        Message block;
+        block.message_body = (unsigned char *)table;
+        block.message_size = AES_BLOCK_SIZE;
+        Message ciphertext = DecryptChunk(&block, key);
+        for (usi i = 0; i < AES_BLOCK_SIZE; i++)
+        {
+            encrypted.message_body[pointer + i] = ciphertext.message_body[i];
+            // printf("%02x ", (unsigned char)ciphertext.message_body[i]);
+        }
+        pointer += AES_BLOCK_SIZE;
+    }
+    printf("\n");
+    return encrypted;
+}
+
+Message EncryptMessage(Message *message, unsigned char *key)
+{
+    usi pointer = 0;
+    Message encrypted;
+    encrypted.message_size = message->message_size;
+    encrypted.message_body = (unsigned char *)malloc(message->message_size);
+    while (pointer < message->message_size)
+    {
+        unsigned char table[16] = {0};
+        for (int j = pointer; j < pointer + AES_BLOCK_SIZE; j++)
+        {
+            if (j > message->message_size)
+            {
+                table[j % AES_BLOCK_SIZE] = 0;
+                continue;
+            }
+            table[j % AES_BLOCK_SIZE] = message->message_body[j];
+        }
+        Message block;
+        block.message_body = (unsigned char *)table;
+        block.message_size = AES_BLOCK_SIZE;
+        Message ciphertext = EncryptChunk(&block, key);
+        for (usi i = 0; i < AES_BLOCK_SIZE; i++)
+        {
+            encrypted.message_body[pointer + i] = ciphertext.message_body[i];
+            // printf("%02x ", (unsigned char)ciphertext.message_body[i]);
+        }
+        pointer += AES_BLOCK_SIZE;
+    }
+    printf("\n");
+    return encrypted;
 }

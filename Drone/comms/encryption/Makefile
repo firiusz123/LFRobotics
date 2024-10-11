@@ -1,31 +1,60 @@
-INCDIR = headers
-IMPLDIR = impl
-SRCDIR = src
-LIBDIR = lib
+# Makefile
 
-TARGET = main
-LIBRARY = encryptionlib.a
+# Define directories
+INCDIR      = include
+IMPLDIR     = src
+EXAMPLEDIR  = examples
+LIBDIR      = lib
 
-CC = gcc
-CFLAGS = -I$(INCDIR) -Wall -g 
+# Define output library names
+STATIC_LIB  = libencryptionlib.a
+SHARED_LIB  = libencryptionlib.so
 
-OBJECTS = $(IMPLDIR)/encryption $(IMPLDIR)/key_generator
+# Compiler and flags
+CC          = gcc
+CFLAGS      = -I$(INCDIR) -Wall -g -fPIC
+LDFLAGS     = -L$(LIBDIR)
 
-$(LIBDIR)/$(LIBRARY): $(OBJECTS)
-	mkdir -p $(LIBDIR)
-	ar rcs $(LIBDIR)/$(LIBRARY) $(OBJECTS)
-	
-$(IMPLDIR)/encryption.o: $(IMPLDIR)/encryption.c $(INCDIR)/encryption.h
-	$(CC) $(CFLAGS) -c $(IMPLDIR)/encryption.c -o $(IMPLDIR)/encryption.o
+# List of object files
+OBJECTS     = $(IMPLDIR)/encryption.o $(IMPLDIR)/key_generator.o
 
-$(IMPLDIR)/key_generator.o: $(IMPLDIR)/key_generator.c $(INCDIR)/key_generator.h
-	$(CC) $(CFLAGS) -c $(IMPLDIR)/key_generator.c -o $(IMPLDIR)/key_generator.o
+# Targets
+.PHONY: all static shared example example_shared clean
 
-$(TARGET): $(SRCDIR)/main.o $(LIBDIR)/$(LIBRARY)
-	$(CC) $(SRCDIR)/main.o -L$(LIBDIR) -lmylib -o $(TARGET)
+all: static shared example example_shared
 
-$(SRCDIR)/main.o: $(SRCDIR)/main.c $(INCDIR)/encryption.h $(INCDIR)/key_generator.h
-	$(CC) $(CFLAGS) -c $(SRCDIR)/main.c -o $(SRCDIR)/main.o
+# Rule to build the static library
+static: $(OBJECTS)
+	@mkdir -p $(LIBDIR)
+	ar rcs $(LIBDIR)/$(STATIC_LIB) $(OBJECTS)
+	@echo "Static library created at $(LIBDIR)/$(STATIC_LIB)"
 
+# Rule to build the shared library
+shared: $(OBJECTS)
+	@mkdir -p $(LIBDIR)
+	$(CC) -shared -o $(LIBDIR)/$(SHARED_LIB) $(OBJECTS)
+	@echo "Shared library created at $(LIBDIR)/$(SHARED_LIB)"
+
+# Pattern rule to compile .c files to .o files
+$(IMPLDIR)/%.o: $(IMPLDIR)/%.c $(INCDIR)/%.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Rule to build the example program linked against the static library
+example: $(EXAMPLEDIR)/main.o static
+	$(CC) $(EXAMPLEDIR)/main.o -L$(LIBDIR) -lencryptionlib -o $(EXAMPLEDIR)/example
+	@echo "Example program (static) created at $(EXAMPLEDIR)/example"
+
+# Rule to build the example program linked against the shared library
+example_shared: $(EXAMPLEDIR)/main.o shared
+	$(CC) $(EXAMPLEDIR)/main.o -L$(LIBDIR) -lencryptionlib -Wl,-rpath=$(LIBDIR) -o $(EXAMPLEDIR)/example_shared
+	@echo "Example program (shared) created at $(EXAMPLEDIR)/example_shared"
+
+# Compile the example program object file
+$(EXAMPLEDIR)/main.o: $(EXAMPLEDIR)/main.c $(INCDIR)/encryption.h $(INCDIR)/key_generator.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Clean up all build artifacts
 clean:
-	rm -f $(IMPLDIR)/*.o $(SRCDIR)/*.o $(TARGET) $(LIBDIR)/$(LIBRARY)
+	rm -f $(IMPLDIR)/*.o $(EXAMPLEDIR)/*.o $(EXAMPLEDIR)/example $(EXAMPLEDIR)/example_shared
+	rm -rf $(LIBDIR)
+	@echo "Cleaned up build artifacts."

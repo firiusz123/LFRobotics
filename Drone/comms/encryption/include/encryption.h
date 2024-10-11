@@ -15,13 +15,13 @@
 
 typedef struct
 {
-    char *key_body;
+    unsigned char *key_body;
     usi key_size;
 } Key;
 
 typedef struct
 {
-    char *message_body;
+    unsigned char *message_body;
     usi message_size;
 } Message;
 // Define AES block size and key size
@@ -35,13 +35,20 @@ void init(ulli *buffer);
 
 // It's like this for now, we will either settle for specific implementation for each structure,
 // or we will just conver the type using casting and this will take size as an argument
-Message EncryptMessage(Message *message, unsigned char *originalKey);
+
+Message EncryptMessage(Message *message, unsigned char *key);
+
+Message DecryptMessage(Message *message, unsigned char *key);
+
+Message EncryptChunk(Message *message, unsigned char *originalKey);
 
 void AES_Encrypt(unsigned char *message, unsigned char *RoundKey, unsigned char *encrypted);
 
-Message DecryptMessage(Message *message, unsigned char *originalKey);
+Message DecryptChunk(Message *message, unsigned char *originalKey);
 
 void AES_Decrypt(unsigned char *encrypted, unsigned char *RoundKey, unsigned char *decrypted);
+
+unsigned char UCharMultiply(unsigned char x, unsigned char y);
 
 void KeyExpansion(unsigned char *key, unsigned char *RoundKey);
 

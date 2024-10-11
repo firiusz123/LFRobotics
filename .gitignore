@@ -162,3 +162,6 @@ cython_debug/
 Hand_tracking/Data/train
 Hand_tracking/Data/README*
 Hand_tracking/Data/data.yaml
+
+.idea/
+.vscode/
