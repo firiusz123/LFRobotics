@@ -23,6 +23,8 @@ typedef struct
 // Returns 0 when key has been written in the buffer and is ready to be used
 void GenerateKey(ulli seed, Buffer *key_write_buffer, usi random_mode);
 
+void GenerateKeyFuncion(ulli seed, Buffer *key_buffer, usi random_mode, unsigned char (*randomFuncion)());
+
 // Simplest rng
 unsigned char RNG(ulli seed);
 
