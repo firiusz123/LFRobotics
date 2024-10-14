@@ -165,3 +165,6 @@ Hand_tracking/Data/data.yaml
 
 .idea/
 .vscode/
+Drone/Map_Tracking/DroneControlSimulation/Matlab/krk_bigger_12008.tif
+Drone/Map_Tracking/DroneControlSimulation/Matlab/krk_bigger_11008.tif
+Drone/Map_Tracking/DroneControlSimulation/Matlab/output_map.tif
