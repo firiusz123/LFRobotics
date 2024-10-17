@@ -1,0 +1,4 @@
+
+
+
+exportedModel = smexportonshape(assemblyURL);
