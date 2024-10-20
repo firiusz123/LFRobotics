@@ -37,3 +37,10 @@ plot(z)
 xlabel('Time (s)')
 ylabel('Z Position (m)')
 title('Z Position vs Time')
+%%
+convergence_point = z(300000:600001)
+figure(3)
+plot(convergence_point)
+std(convergence_point)
+mean(convergence_point)
+
