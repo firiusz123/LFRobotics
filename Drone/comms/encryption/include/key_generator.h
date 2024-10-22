@@ -10,12 +10,13 @@
 #endif
 
 #define BUFFER_SIZE 256
+#define KEY_BUFFER_SIZE 16
 
 typedef struct
 {
-    unsigned char key[BUFFER_SIZE]; // ???
-    volatile char connection_established; // Size of 1
-    usi key_size; // Size of 2 
+    unsigned char key[KEY_BUFFER_SIZE];
+    volatile char connection_established;
+    usi key_size;
 } Buffer;
 
 // Of course we should avoid using libraries unless absolutely neccessary

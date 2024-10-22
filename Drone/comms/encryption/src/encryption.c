@@ -5,11 +5,6 @@
 #include <string.h>
 #include <stdio.h>
 // AES constants for AES-256
-#define AES_KEY_SIZE 32   // 256 bits
-#define AES_BLOCK_SIZE 16 // 128 bits
-#define AES_NB 4          // Number of columns (32-bit words) comprising the State
-#define AES_NK 8          // Number of 32-bit words comprising the Cipher Key
-#define AES_NR 14         // Number of rounds
 
 // S-box table
 unsigned char sbox[256] = {
@@ -507,7 +502,7 @@ Message DecryptMessage(Message *message, unsigned char *key)
         for (usi i = 0; i < AES_BLOCK_SIZE; i++)
         {
             encrypted.message_body[pointer + i] = ciphertext.message_body[i];
-            // printf("%02x ", (unsigned char)ciphertext.message_body[i]);
+            printf("%02x ", (unsigned char)ciphertext.message_body[i]);
         }
         pointer += AES_BLOCK_SIZE;
     }
@@ -540,7 +535,7 @@ Message EncryptMessage(Message *message, unsigned char *key)
         for (usi i = 0; i < AES_BLOCK_SIZE; i++)
         {
             encrypted.message_body[pointer + i] = ciphertext.message_body[i];
-            // printf("%02x ", (unsigned char)ciphertext.message_body[i]);
+            printf("%02x ", (unsigned char)ciphertext.message_body[i]);
         }
         pointer += AES_BLOCK_SIZE;
     }
