@@ -356,6 +356,8 @@ void AES_Decrypt(unsigned char *encrypted, unsigned char *RoundKey, unsigned cha
 Message EncryptChunk(Message *message, unsigned char *originalKey)
 {
     Message encrypted_message;
+    encrypted_message.message_size = AES_BLOCK_SIZE;
+    encrypted_message.message_body = (unsigned char *)malloc(AES_BLOCK_SIZE);
     unsigned char *RoundKey; // 16 * 15 = 240 bytes for AES-256
     RoundKey = (unsigned char *)malloc(AES_BLOCK_SIZE * AES_BLOCK_SIZE * (+1));
     // Key Expansion
@@ -363,7 +365,11 @@ Message EncryptChunk(Message *message, unsigned char *originalKey)
 
     // // Ensure message size is 16 bytes (AES block size)
     // // Implement padding if necessary (e.g., PKCS#7)
-    usi status = PKCS7_Padding(message->message_body, message->message_size, &encrypted_message.message_body, message->message_size + (16 - (message->message_size % 16)));
+    //
+    // Don't touch, it creates a warning, but if the type of second argument is met, it dumps core
+    //
+    usi status = PKCS7_Padding(message->message_body, &message->message_size, encrypted_message.message_body, message->message_size + (16 - (message->message_size % 16)));
+    printf("\nAfter applying PKCS7 new length: %d\n", status);
     // // if (status == -1)
     // // {
     // //// Should add some error handling...
@@ -379,8 +385,6 @@ Message EncryptChunk(Message *message, unsigned char *originalKey)
     AES_Encrypt(plaintext, RoundKey, ciphertext);
 
     // // Prepare encrypted message
-    encrypted_message.message_size = AES_BLOCK_SIZE;
-    encrypted_message.message_body = (unsigned char *)malloc(AES_BLOCK_SIZE);
     if (encrypted_message.message_body == NULL)
     {
         // Handle malloc failure
@@ -509,7 +513,6 @@ Message DecryptMessage(Message *message, unsigned char *key)
     printf("\n");
     return encrypted;
 }
-
 Message EncryptMessage(Message *message, unsigned char *key)
 {
     usi pointer = 0;
