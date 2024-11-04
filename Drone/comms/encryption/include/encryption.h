@@ -5,6 +5,13 @@
 #define AES_BLOCK_SIZE 16
 #endif
 
+#define AES_KEY_SIZE 32   
+#define AES_BLOCK_SIZE 16 
+#define AES_NB 4
+#define AES_NK 8
+#define AES_NR 14          
+
+
 #ifndef ulli
 #define ulli unsigned long long int
 #endif
@@ -24,6 +31,7 @@ typedef struct
     unsigned char *message_body;
     usi message_size;
 } Message;
+
 // Define AES block size and key size
 typedef struct
 {
