@@ -28,11 +28,17 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "./encryption.h"
+#include "./key_generator.h"
+#include "./key_exchange.h"
+#include "./host.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+
+#define ulli unsigned long long int
+#define usi unsigned short int
 
 /* USER CODE END ET */
 
@@ -91,6 +97,24 @@ extern "C" {
 void SubghzApp_Init(void);
 
 /* USER CODE BEGIN EFP */
+
+void sendData(Host *host, Buffer *my_key, unsigned char *data, usi data_size);
+
+void sendMessage(Host *host, Buffer *my_key, Message *message);
+
+// Returns the recieved data in a decoded format
+void recieveData(char *data, usi dataSize);
+
+// Transmits a message, for current implementation it might just print this string
+void transmit(Host *host, Message *message);
+
+void transmitKey(Host *host, Buffer *my_key);
+
+// If recieved the key
+void handleKey(Host *host);
+
+void printHost(Host *host);
+
 
 /* USER CODE END EFP */
 

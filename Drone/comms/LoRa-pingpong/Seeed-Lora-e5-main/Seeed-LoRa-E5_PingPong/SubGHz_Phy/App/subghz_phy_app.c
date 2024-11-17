@@ -97,7 +97,7 @@ uint16_t RxBufferSize = 0;
 int8_t RssiValue = 0;
 /* Last  Received packer SNR (in Lora modulation)*/
 int8_t SnrValue = 0;
-/* device state. Master: true, Slave: false*/
+/* device state. Master: true, Slave: f alse*/
 bool isMaster = true;
 /* random delay to make sure 2 devices will sync*/
 /* the closest the random delays are, the longer it will
@@ -192,14 +192,14 @@ void SubghzApp_Init(void)
                     LORA_SPREADING_FACTOR, LORA_CODINGRATE,
                     LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
                     true, 0, 0, LORA_IQ_INVERSION_ON, TX_TIMEOUT_VALUE);
-  APP_LOG(TS_ON, VLEVEL_M, "Tx configured");
+  APP_LOG(TS_ON, VLEVEL_M, "Tx configured\n");
   Radio.SetRxConfig(MODEM_LORA, LORA_BANDWIDTH, LORA_SPREADING_FACTOR,
                     LORA_CODINGRATE, 0, LORA_PREAMBLE_LENGTH,
                     LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON,
                     0, true, 0, 0, LORA_IQ_INVERSION_ON, true);
-  APP_LOG(TS_ON, VLEVEL_M, "Rx configured");
+  APP_LOG(TS_ON, VLEVEL_M, "Rx configured\n");
   Radio.SetMaxPayloadLength(MODEM_LORA, MAX_APP_BUFFER_SIZE);
-  APP_LOG(TS_ON, VLEVEL_M, "Max payload set");
+  APP_LOG(TS_ON, VLEVEL_M, "Max payload set\n");
 #elif ((USE_MODEM_LORA == 0) && (USE_MODEM_FSK == 1))
   APP_LOG(TS_OFF, VLEVEL_M, "---------------\n\r");
   APP_LOG(TS_OFF, VLEVEL_M, "FSK_MODULATION\n\r");
@@ -328,8 +328,8 @@ static void OnRxError(void)
 /* USER CODE BEGIN PrFD */
 static void PingPong_Process(void)
 {
-//  Radio.Sleep();
-
+ Radio.Sleep();
+  APP_LOG(TS_OFF,VLEVEL_M,"Radio woke up\n");
   switch (State)
   {
     case RX:
@@ -424,5 +424,181 @@ static void PingPong_Process(void)
   }
 }
 
+
+
+void printHost(Host *host)
+{
+    APP_LOG(TS_OFF,VLEVEL_M,"\nHost: ");
+    host->address_length = HOST_ADDRESS_LENGTH;
+    for (int i = 0; i < host->address_length; i++)
+    {
+        APP_LOG(TS_OFF,VLEVEL_M,"%02x", host->hostname[i]);
+    }
+}
+
+void transmit(Host *host, Message *message)
+{
+    APP_LOG(TS_OFF,VLEVEL_M,"Transmitting message to host:");
+    printHost(host);
+    APP_LOG(TS_OFF,VLEVEL_M,"\nPacket number %lld\n", host->packet_ID);
+    // This logic has to be changed to functional, that is - I have to call interrupt functions that recieve and transmit data until the transmission is complete
+    // To keep in mind: I have to have a counter in case there is not confirmation received after a couple of pings, we shut down the function and print error message, however
+    // we do not halt the program, we instead retry handshake with the host, I think I can handle this logic in the sendData and other functions that take care of this options
+    
+    for (usi i = 0; i < message->message_size; i++)
+    {
+        APP_LOG(TS_OFF,VLEVEL_M,"%02x", message->message_body[i]);
+    }
+    host->packet_ID += 1;
+    APP_LOG(TS_OFF,VLEVEL_M,"\nTransmission finished\n");
+}
+
+
+void sendData(Host *host, Buffer *my_key, unsigned char *data, usi data_size)
+{
+  
+  Radio.Sleep();
+  APP_LOG(TS_OFF,VLEVEL_M,"Radio woke up\n");
+  
+  switch (State)
+  {
+    case RX:
+      if (isMaster == true)
+      {
+        if (RxBufferSize > 0)
+        {
+          if (strncmp((unsigned char *)BufferRx, host->hostname, HOST_ADDRESS_LENGTH) == 0)
+          {
+            /* Add delay between RX and TX */
+            HAL_Delay(Radio.GetWakeupTime() + RX_TIME_MARGIN);
+            /* master sends PING*/
+            APP_LOG(TS_ON, VLEVEL_L, "..."
+                    "PING"
+                    "\n\r");
+            APP_LOG(TS_ON, VLEVEL_L, "Master Tx start\n\r");
+            memcpy(BufferTx, PING, sizeof(PING) - 1);
+            Radio.Send(BufferTx, PAYLOAD_LEN);
+          }
+          else if (strncmp((unsigned char *)BufferRx, PING, sizeof(PING) - 1) == 0)
+          {
+            /* A master already exists then become a slave */
+            isMaster = false;
+            APP_LOG(TS_ON, VLEVEL_L, "Slave Rx start\n\r");
+            Radio.Rx(RX_TIMEOUT_VALUE);
+          }
+          else /* valid reception but neither a PING or a PONG message */
+          {
+            /* Set device as master and start again */
+            isMaster = true;
+            APP_LOG(TS_ON, VLEVEL_L, "Master Rx start\n\r");
+            Radio.Rx(RX_TIMEOUT_VALUE);
+          }
+        }
+      }
+      else
+      {
+        if (RxBufferSize > 0)
+        {
+          if (strncmp((const char *)BufferRx, PING, sizeof(PING) - 1) == 0)
+          {
+            /* Add delay between RX and TX */
+            HAL_Delay(Radio.GetWakeupTime() + RX_TIME_MARGIN);
+            /*slave sends PONG*/
+            APP_LOG(TS_ON, VLEVEL_L, "..."
+                    "PONG"
+                    "\n\r");
+            APP_LOG(TS_ON, VLEVEL_L, "Slave  Tx start\n\r");
+            memcpy(BufferTx, PONG, sizeof(PONG) - 1);
+            Radio.Send(BufferTx, PAYLOAD_LEN);
+          }
+          else /* valid reception but not a PING as expected */
+          {
+            /* Set device as master and start again */
+            isMaster = true;
+            APP_LOG(TS_ON, VLEVEL_L, "Master Rx start\n\r");
+            Radio.Rx(RX_TIMEOUT_VALUE);
+          }
+        }
+      }
+      break;
+    case TX:
+      if (!(host->connected & 0x01))
+      {
+          unsigned char success = handshake(host);
+          if (success & 0x02)
+          {
+              APP_LOG(TS_ON, VLEVEL_L,"Host not reachable\n");
+          }
+          else if (success & 0x4)
+          {
+              APP_LOG(TS_ON, VLEVEL_L,"Host refused the connection\n");
+          }
+          else
+          {
+              APP_LOG(TS_ON, VLEVEL_L,"Another error has occured while trying to reach the host\n");
+          }
+      }
+      Message message;
+      message.message_body = (unsigned char *)malloc(data_size);
+
+      memcpy(message.message_body, data, data_size);
+      message.message_size = data_size;
+
+      Message encrypted = EncryptMessage(&message, my_key->key);
+      transmit(host, &encrypted);
+
+      free(message.message_body);
+      free(encrypted.message_body);
+      APP_LOG(TS_ON, VLEVEL_L, "Rx start\n\r");
+      Radio.Rx(RX_TIMEOUT_VALUE);
+      break;
+    case RX_TIMEOUT:
+    case RX_ERROR:
+      if (isMaster == true)
+      {
+        /* Send the next PING frame */
+        /* Add delay between RX and TX*/
+        /* add random_delay to force sync between boards after some trials*/
+        HAL_Delay(Radio.GetWakeupTime() + RX_TIME_MARGIN + random_delay);
+        APP_LOG(TS_ON, VLEVEL_L, "Master Tx start\n\r");
+        /* master sends PING*/
+        memcpy(BufferTx, PING, sizeof(PING) - 1);
+        Radio.Send(BufferTx, PAYLOAD_LEN);
+      }
+      else
+      {
+        APP_LOG(TS_ON, VLEVEL_L, "Slave Rx start\n\r");
+        Radio.Rx(RX_TIMEOUT_VALUE);
+      }
+      break;
+    case TX_TIMEOUT:
+      APP_LOG(TS_ON, VLEVEL_L, "Slave Rx start\n\r");
+      Radio.Rx(RX_TIMEOUT_VALUE);
+      break;
+    default:
+      break;
+  }
+
+}
+
+void sendMessage(Host *host, Buffer *my_key, Message *message)
+{
+
+}
+
+// Returns the recieved data in a decoded format
+void recieveData(char *data, usi dataSize)
+{
+
+}
+// Transmits a message, for current implementation it might just print this string
+void transmit(Host *host, Message *message)
+{
+
+}
+void transmitKey(Host *host, Buffer *my_key)
+{
+
+}
 
 /* USER CODE END PrFD */
