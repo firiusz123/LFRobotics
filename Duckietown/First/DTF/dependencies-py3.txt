@@ -1,0 +1,5 @@
+# LIST YOUR PYTHON3 PACKAGES HERE
+# mlocate
+opencv-python
+numpy==1.21
+tensorflow
