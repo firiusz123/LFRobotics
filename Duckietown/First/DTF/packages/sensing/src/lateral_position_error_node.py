@@ -4,7 +4,7 @@ import rospy
 import cv2
 import cv_bridge
 import numpy as np
-
+from math import sqrt
 print("Lorem ipsum")
 
 # import DTROS-related classes
@@ -85,17 +85,42 @@ class LateralPositionError(DTROS):
 
             # Cut image, only consider 75% of image area
             # D - Place your code here       
-            result_mask[self.search_area.value['top']:self.search_area.value['bottom'],self.image_param.value['height']:self.image_param.value['width']]
+            result_mask[self.search_area.value['top']:self.search_area.value['bottom'],0:self.image_param.value['width']]
             
-            # Find center of mass detected red line
-            # E - Place your code here
-            cx = None
-            cy = None
-            
+            gray_image = cv2.cvtColor(result_mask, cv2.COLOR_BGR2GRAY)
+
+            _, thresh_image = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY)
+
+            # Find contours of the object in the thresholded image
+            contours, _ = cv2.findContours(thresh_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            # Assuming the largest contour is the object
+            # Get the moments of the largest contour
+            largest_contour = max(contours, key=cv2.contourArea)
+
+            # Calculate moments for the largest contour
+            M = cv2.moments(largest_contour)
+
+            # Check if the moment is valid to avoid division by zero
+            if M['m00'] != 0:
+                # Calculate the center of mass (centroid)
+                cx = int(M['m10'] / M['m00'])
+                cy = int(M['m01'] / M['m00'])
+                print(f"Center of Mass (Centroid): ({cx}, {cy})")
+            else:
+                cx, cy = None, None
+                print("No object found.")
+
+            # Visualize the centroid on the image
+            if cx is not None and cy is not None:
+                cv2.circle(image, (cx, cy), 10, (0, 0, 255), -1) 
+
+            cx_0 = self.search_area.value['width']/2
+            cy_0 = (self.search_area.value['bottom']-self.search_area.value['top'])/2
             # Estimate error
             # F - Place your code here
-            self.error['raw'] = 2
-            self.error['norm'] = 1
+            self.error['raw'] = (cx_0 - cx) + (cy_0 - cy)
+            self.error['norm'] = ((cx_0 - cx) + (cy_0 - cy))/sqrt((cx_0 - cx)**2 + (cy_0 - cy)**2)
             # Publish error
             # G - Place your code here
             self.pub_error['raw'].publish(self.error['raw'])
