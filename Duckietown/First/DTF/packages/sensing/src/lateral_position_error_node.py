@@ -73,15 +73,19 @@ class LateralPositionError(DTROS):
 
             # Find follow line
             # C - Place your code here
+
             #lower boundary
-            lower_mask = cv2.inRange(image_hsv, self.color_line_mask['lower1'], self.color_line_mask['upper1'])
-            upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
             # upper boundary
             
-            full_mask = lower_mask + upper_mask
+            lower_mask = cv2.inRange(image_hsv,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
+            upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
+
+            # Combine the masks
+            full_mask = cv2.bitwise_or(lower_mask, upper_mask)
 
             # Mask image
             result_mask = cv2.bitwise_and(image, image, mask=full_mask)
+            rospy.loginfo("Lorem ipsum")
 
             # Cut image, only consider 75% of image area
             # D - Place your code here       
@@ -108,15 +112,14 @@ class LateralPositionError(DTROS):
                 cy = int(M['m01'] / M['m00'])
                 print(f"Center of Mass (Centroid): ({cx}, {cy})")
             else:
-                cx, cy = None, None
-                print("No object found.")
-
-            # Visualize the centroid on the image
-            if cx is not None and cy is not None:
-                cv2.circle(image, (cx, cy), 10, (0, 0, 255), -1) 
-
-            cx_0 = self.image_param.value['width']/2
-            cy_0 = (self.search_area.value['bottom']-self.search_area.value['top'])/2
+                cx, cy = 0, 0
+            
+            rospy.loginfo("............................................................")
+            rospy.loginfo(cx)
+            rospy.loginfo(cy)
+            
+            cx_0 = self.search_area.value['bottom'] - self.search_area.value['top']
+            cy_0 = self.image_param.value['width']
             # Estimate error
             # F - Place your code here
             self.error['raw'] = (cx_0 - cx) + (cy_0 - cy)
@@ -129,7 +132,6 @@ class LateralPositionError(DTROS):
 
             # DEBUG
             if self.pub_debug_img.anybody_listening():
-                
                 # Add circle in point of center of mass
                 cv2.circle(image, (int(cx), int(cy)), 10, (0,255,0), -1)
                 
