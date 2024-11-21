@@ -71,29 +71,42 @@ class LateralPositionError(DTROS):
 
             # Find follow line
             # C - Place your code here
-            #lower boundary
-            lower_mask = (image_hsv,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
-            
-            
-            # upper boundary
-            upper_mask = (image_hsv,self.color_line_mask['lower2'], self.color_line_mask['upper2'])
-            # Mask image
-            full_mask = cv2.inRange(lower_mask,upper_mask)
 
+            #lower boundary
+            # upper boundary
+            
+            lower_mask = cv2.inRange(image_hsv,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
+            upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
+
+            # Combine the masks
+            full_mask = cv2.bitwise_or(lower_mask, upper_mask)
+
+            # Mask image
             result_mask = cv2.bitwise_and(image, image, mask=full_mask)
+            rospy.loginfo("Lorem ipsum")
 
             # Cut image, only consider 75% of image area
 
             # D - Place your code here       
-            result_mask[self.search_area.value['top']:self.search_area.value['bottom'],self.image_param.value['height']:self.image_param.value['width']]
             
+            reduced_mask = result_mask[self.search_area.value['top']:self.search_area.value['bottom'],self.image_param.value['height']:self.image_param.value['width']]
+            # Threshold to create a binary image (single channel)
+            ret, thresh = cv2.threshold(reduced_mask[:, :, 0], 127, 255, 0)  # Use only the first channel for binary thresholding
+
             # Find center of mass detected yellow line
             # E - Place your code here
-            M = cv2.moments(result_mask)
- 
-            # calculate x,y coordinate of center
-            cx = int(M["m10"] / M["m00"])
-            cy = int(M["m01"] / M["m00"])
+            M = cv2.moments(thresh)
+
+            if M["m00"] != 0:  # To prevent division by zero
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+            else:
+                cx, cy = 0, 0
+            
+            rospy.loginfo("............................................................")
+            rospy.loginfo(cx)
+            rospy.loginfo(cy)
+            
             cx_0 = self.search_area.value['bottom'] - self.search_area.value['top']
             cy_0 = self.image_param.value['width']
             # Estimate error
@@ -107,7 +120,6 @@ class LateralPositionError(DTROS):
 
             # DEBUG
             if self.pub_debug_img.anybody_listening():
-                
                 # Add circle in point of center of mass
                 cv2.circle(image, (int(cx), int(cy)), 10, (0,255,0), -1)
                 
