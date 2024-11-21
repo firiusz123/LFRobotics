@@ -63,7 +63,7 @@ class LateralPositionError(DTROS):
         try:
             # Read input image
             # A - Place your code here
-            image = self.cvbridge.compressed_imgmsg_to_cv2()
+            image = self.cvbridge.compressed_imgmsg_to_cv2(msg)
 
             # Convert image to HSV color space
             # B - Place your code here
@@ -73,32 +73,37 @@ class LateralPositionError(DTROS):
             # C - Place your code here
             #lower boundary
             lower_mask = (image_hsv,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
-            upper_mask = (image_hsv,self.color_line_mask['lower2'], self.color_line_mask['upper2'])
-            cv2.inRange(image_hsv,lower_mask,upper_mask)
-            # upper boundary
             
-            full_mask = lower_mask + upper_mask
-
+            
+            # upper boundary
+            upper_mask = (image_hsv,self.color_line_mask['lower2'], self.color_line_mask['upper2'])
             # Mask image
+            full_mask = cv2.inRange(lower_mask,upper_mask)
+
             result_mask = cv2.bitwise_and(image, image, mask=full_mask)
 
             # Cut image, only consider 75% of image area
+
             # D - Place your code here       
             result_mask[self.search_area.value['top']:self.search_area.value['bottom'],self.image_param.value['height']:self.image_param.value['width']]
             
-            # Find center of mass detected red line
+            # Find center of mass detected yellow line
             # E - Place your code here
-            cx = None
-            cy = None
-            
+            M = cv2.moments(result_mask)
+ 
+            # calculate x,y coordinate of center
+            cx = int(M["m10"] / M["m00"])
+            cy = int(M["m01"] / M["m00"])
+            cx_0 = self.search_area.value['bottom'] - self.search_area.value['top']
+            cy_0 = self.image_param.value['width']
             # Estimate error
             # F - Place your code here
-            # error = cx - 
-            # normalized_error = 
+            self.error['raw'] = cx_0 - cx
+            self.error['norm'] = cy_0 - cy
             # Publish error
             # G - Place your code here
-            # self.pub_error['raw'].publish(error)
-            # self.pub_error['norm'].publish(normailzed_error)
+            self.pub_error['raw'].publish(self.error['raw'])
+            self.pub_error['norm'].publish(self.error['norm'])
 
             # DEBUG
             if self.pub_debug_img.anybody_listening():
