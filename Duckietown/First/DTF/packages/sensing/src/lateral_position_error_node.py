@@ -5,6 +5,8 @@ import cv2
 import cv_bridge
 import numpy as np
 
+print("Lorem ipsum")
+
 # import DTROS-related classes
 from duckietown.dtros import \
     DTROS, \
@@ -72,34 +74,28 @@ class LateralPositionError(DTROS):
             # Find follow line
             # C - Place your code here
             #lower boundary
-            lower_mask = (image_hsv,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
-            
-            
+            lower_mask = cv2.inRange(image_hsv, self.color_line_mask['lower1'], self.color_line_mask['upper1'])
+            upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
             # upper boundary
-            upper_mask = (image_hsv,self.color_line_mask['lower2'], self.color_line_mask['upper2'])
-            # Mask image
-            full_mask = cv2.inRange(lower_mask,upper_mask)
+            
+            full_mask = lower_mask + upper_mask
 
+            # Mask image
             result_mask = cv2.bitwise_and(image, image, mask=full_mask)
 
             # Cut image, only consider 75% of image area
-
             # D - Place your code here       
             result_mask[self.search_area.value['top']:self.search_area.value['bottom'],self.image_param.value['height']:self.image_param.value['width']]
             
-            # Find center of mass detected yellow line
+            # Find center of mass detected red line
             # E - Place your code here
-            M = cv2.moments(result_mask)
- 
-            # calculate x,y coordinate of center
-            cx = int(M["m10"] / M["m00"])
-            cy = int(M["m01"] / M["m00"])
-            cx_0 = self.search_area.value['bottom'] - self.search_area.value['top']
-            cy_0 = self.image_param.value['width']
+            cx = None
+            cy = None
+            
             # Estimate error
             # F - Place your code here
-            self.error['raw'] = cx_0 - cx
-            self.error['norm'] = cy_0 - cy
+            self.error['raw'] = 2
+            self.error['norm'] = 1
             # Publish error
             # G - Place your code here
             self.pub_error['raw'].publish(self.error['raw'])
