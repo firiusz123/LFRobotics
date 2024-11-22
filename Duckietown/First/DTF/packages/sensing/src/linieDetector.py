@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import yaml
 import os
+from math import sqrt
 
 # Helper function to load YAML configuration
 def load_yaml_config(file_path):
@@ -80,9 +81,15 @@ M = cv2.moments(largest_contour)
 # Check if the moment is valid to avoid division by zero
 if M['m00'] != 0:
     # Calculate the center of mass (centroid)
+    cx_0 = image_param['width']/2
+    cy_0 = (search_area['bottom']-search_area['top'])/2
     cx = int(M['m10'] / M['m00'])
     cy = int(M['m01'] / M['m00'])
+    error = (cx_0 - cx) + (cy_0 - cy)
+    error_norm = (error)/((cx_0 - cx)**2 + (cy_0 - cy)**2)
+    print(f"Desired location: {cx_0} {cy_0}")
     print(f"Center of Mass (Centroid): ({cx}, {cy})")
+    print(f"Errors: {error} {error_norm}")
 else:
     cx, cy = None, None
     print("No object found.")

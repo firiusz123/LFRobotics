@@ -115,14 +115,15 @@ class LateralPositionError(DTROS):
             if cx is not None and cy is not None:
                 cv2.circle(image, (cx, cy), 10, (0, 0, 255), -1) 
 
-            cx_0 = self.search_area.value['width']/2
+            cx_0 = self.image_param.value['width']/2
             cy_0 = (self.search_area.value['bottom']-self.search_area.value['top'])/2
             # Estimate error
             # F - Place your code here
             self.error['raw'] = (cx_0 - cx) + (cy_0 - cy)
-            self.error['norm'] = ((cx_0 - cx) + (cy_0 - cy))/sqrt((cx_0 - cx)**2 + (cy_0 - cy)**2)
+            self.error['norm'] = ((cx_0 - cx) + (cy_0 - cy))/((cx_0 - cx)**2 + (cy_0 - cy)**2)
             # Publish error
             # G - Place your code here
+            rospy.loginfo(f"Publishing data {self.error['raw']} {self.error['norm']}")
             self.pub_error['raw'].publish(self.error['raw'])
             self.pub_error['norm'].publish(self.error['norm'])
 
