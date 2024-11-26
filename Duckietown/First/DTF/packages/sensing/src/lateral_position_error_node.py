@@ -85,7 +85,7 @@ class LateralPositionError(DTROS):
 
             # Cut image, only consider 75% of image area
             # D - Place your code here       
-            result_mask[self.search_area.value['top']:self.search_area.value['bottom'],0:self.image_param.value['width']]
+            result_mask = result_mask[self.search_area.value['top']:self.search_area.value['bottom'],0:self.image_param.value['width']]
             
             gray_image = cv2.cvtColor(result_mask, cv2.COLOR_BGR2GRAY)
 
@@ -153,8 +153,8 @@ class LateralPositionError(DTROS):
                     (0, 255, 0), 2)
                 
                 # Message data
-                debug_out_image = self.cvbridge.cv2_to_compressed_imgmsg(np.concatenate(([image], [result_mask]),axis=0).reshape(
-                    (2*self.image_param.value['height'], self.image_param.value['width'], 3)), 'jpg')
+                debug_out_image = self.cvbridge.cv2_to_compressed_imgmsg(np.concatenate(([image], [result_mask]),axis=1).reshape(
+                    (self.image_param.value['height']+(self.search_area.value['bottom']-self.search_area.value['top']), self.image_param.value['width'], 3)), 'jpg')
                 debug_out_image.header.stamp = rospy.Time.now()
                 
                 # Publish transformed image
