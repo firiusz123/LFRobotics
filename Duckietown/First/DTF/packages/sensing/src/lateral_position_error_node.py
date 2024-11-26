@@ -26,6 +26,8 @@ class LateralPositionError(DTROS):
             node_type=NodeType.PERCEPTION
         )
 
+        self.max = -float('inf')
+        self.min = float('inf') 
         # Read color mask
         self.color = DTParam('~color', param_type=ParamType.DICT)
 
@@ -63,8 +65,8 @@ class LateralPositionError(DTROS):
 
     def callback(self, msg) -> None:
         try:
-            self.max = 1
-            self.min = 1 
+
+            
             # Read input image
             # A - Place your code here
             image = self.cvbridge.compressed_imgmsg_to_cv2(msg)
@@ -93,13 +95,10 @@ class LateralPositionError(DTROS):
             # D - Place your code here       
             result_mask = result_mask[self.search_area.value['top']:self.search_area.value['bottom'],0:self.image_param.value['width']]
             
-<<<<<<< Updated upstream
-            gray_image = cv2.cvtColor(result_mask, cv2.COLOR_BGR2GRAY)
-=======
             reduced_mask = result_mask[self.search_area.value['top']:self.search_area.value['bottom'],0:self.image_param.value['width']]
+            gray_image = cv2.cvtColor(result_mask, cv2.COLOR_BGR2GRAY)
             # Threshold to create a binary image (single channel)
-            ret, thresh = cv2.threshold(reduced_mask[:, :, 0], 127, 255, 0)  # Use only the first channel for binary thresholding
->>>>>>> Stashed changes
+            # ret, thresh = cv2.threshold(reduced_mask[:, :, 0], 127, 255, 0)  # Use only the first channel for binary thresholding
 
             _, thresh_image = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY)
 
@@ -122,12 +121,12 @@ class LateralPositionError(DTROS):
             else:
                 cx, cy = 0, 0
             
+            cy_0 = ( self.search_area.value['bottom'] - self.search_area.value['top'] ) // 2   
+            cx_0 = self.image_param.value['width'] // 2
             rospy.loginfo("............................................................")
-            rospy.loginfo(cx)
-            rospy.loginfo(cy)
+            rospy.loginfo(f"CX {cx}  CY {cy} CX_0 {cx_0} CY_0 {cy_0} MIN {self.min} MAX {self.max}")
+            rospy.loginfo("............................................................")
             
-            cx_0 = self.search_area.value['bottom'] - self.search_area.value['top']
-            cy_0 = self.image_param.value['width']
             # Estimate error
             # F - Place your code here
             self.error['raw'] = (cx_0 - cx) + (cy_0 - cy)
@@ -155,6 +154,7 @@ class LateralPositionError(DTROS):
             if self.pub_debug_img.anybody_listening():
                 # Add circle in point of center of mass
                 cv2.circle(image, (int(cx), int(cy) + int(self.search_area.value['top'])), 10, (0,255,0), -1)
+                #cv2.circle(image, (int(cx), int(cy) + int(self.search_area.value['top'])), 10, (0,255,0), -1)
                 
                 # Add error value to image
                 cv2.rectangle(image, (0, 0), (self.image_param.value['width'], 50), (255,255,255), -1)
@@ -167,7 +167,8 @@ class LateralPositionError(DTROS):
                     org=(10,40), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,0,0), fontScale=0.5, 
                     thickness=1, lineType=cv2.LINE_AA)
                 
-                cv2.circle(result_mask, (int(cx), int(cy) + int(self.search_area.value['top'])), 10, (0,255,0), -1)
+                # cv2.circle(result_mask, (int(cx), int(cy) + int(self.search_area.value['top'])), 10, (0,255,0), -1)
+                cv2.circle(result_mask, (int(cx), int(cy)), 10, (0,255,0), -1)
                 cv2.line(result_mask, 
                     (0, self.search_area.value['top']), (self.image_param.value['width'], self.search_area.value['top']), 
                     (0, 255, 0), 2)
