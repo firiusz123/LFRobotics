@@ -20,6 +20,9 @@ class PIDController:
         self.Ki = None
         self.Kd = None
 
+        self.error = rospy.Subscriber('~error/raw/lateral', Float32, self.callback, queue_size=1)
+        self.normalized = rospy.Subscriber('~error/norm/lateral', Float32, self.callback, queue_size=1)
+
     def run(self, v_0, theta_ref, theta_hat, prev_e, prev_int, delta_t):
         """
         Args:
@@ -36,8 +39,11 @@ class PIDController:
             e_int (:double:) current integral error (automatically becomes prev_int_y at next iteration).
         """
         # A - Place your code here 
-
+        self.prev_int = prev_int+self.error*delta_t
+        E  = self.Kd*self.error + self.Ki*(self.prev_int) + self.Kd*((self.error-prev_e)/delta_t)
+        self.prev_e = self.error
         # Tracking error
+        
 
         # integral of the error
         # anti-windup - preventing the integral error from growing too much
