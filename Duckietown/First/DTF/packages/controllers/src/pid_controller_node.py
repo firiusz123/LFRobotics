@@ -19,10 +19,14 @@ class PIDController:
         self.Kp = None
         self.Ki = None
         self.Kd = None
-
+        self.prev_e = 0.0
+        self.prev_int = 0.0
+        self.error = 0
+        #apparently in the code when the PIDcontroll starts there is a callback with error but we cannot pass it to the run function 
         self.error = rospy.Subscriber('~error/raw/lateral', Float32, self.callback, queue_size=1)
         self.normalized = rospy.Subscriber('~error/norm/lateral', Float32, self.callback, queue_size=1)
-
+    
+        
     def run(self, v_0, theta_ref, theta_hat, prev_e, prev_int, delta_t):
         """
         Args:
@@ -39,21 +43,26 @@ class PIDController:
             e_int (:double:) current integral error (automatically becomes prev_int_y at next iteration).
         """
         # A - Place your code here 
-        self.prev_int = prev_int+self.error*delta_t
-        E  = self.Kd*self.error + self.Ki*(self.prev_int) + self.Kd*((self.error-prev_e)/delta_t)
-        self.prev_e = self.error
-        # Tracking error
         
+        
+        e = self.error
+        # Tracking error
+        P = self.Kd * e
 
         # integral of the error
         # anti-windup - preventing the integral error from growing too much
-        e_int = max(min(e_int, 1), -1)
+        I = self.Ki*(self.prev_int + e *delta_t)
+
+        e_int = max(min(I, 1), -1)
 
         # derivative of the error
+        D = self.Kd*((e - prev_e)/delta_t)
         
 
         # PID controller for omega
-        
+        omega = P + I + D 
+
+
         return v_0, omega, e, e_int
     
     def set_param(self, params)->None :
@@ -107,7 +116,10 @@ class WrapperController(DTROS):
 
             # Compute controll
             # B - Place your code here 
+            error = msg.data
             
+            delta_t = self.delta_t.value
+            omega = self.controller.compute_control(error, delta_t)
             # Scalling output form controller
             self.twist.omega = self. omega_max.value * self.twist.omega
 
