@@ -38,8 +38,29 @@ xlabel('Time (s)')
 ylabel('Z Position (m)')
 title('Z Position vs Time')
 %%
-convergence_point = z(300000:600001)
+rotation = out.ROT;
+rot = squeeze(rotation);
+rot = rot*pi;
+%%
 figure(3)
+
+
+subplot(1,3,1)
+plot(rot(1,:))
+title('X rotation')
+
+
+subplot(1,3,2)
+plot(rot(2,:))
+title('Y rotation')
+
+
+subplot(1,3,3)
+plot(rot(3,:))
+title('Z rotation')
+%%
+convergence_point = z(300000:600001);
+figure(4)
 plot(convergence_point)
 std(convergence_point)
 mean(convergence_point)
