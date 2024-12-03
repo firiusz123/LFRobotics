@@ -21,13 +21,13 @@ class PIDController:
         self.Kd = None
         self.prev_e = 0.0
         self.prev_int = 0.0
-        self.error = 0
-        #apparently in the code when the PIDcontroll starts there is a callback with error but we cannot pass it to the run function 
-        self.error = rospy.Subscriber('~error/raw/lateral', Float32, self.callback, queue_size=1)
-        self.normalized = rospy.Subscriber('~error/norm/lateral', Float32, self.callback, queue_size=1)
+        # #apparently in the code when the PIDcontroll starts there is a callback with error but we cannot pass it to the run function 
+        # self.error = rospy.Subscriber('~error/raw/lateral', Float32, self.callback, queue_size=1)
+        # self.normalized = rospy.Subscriber('~error/norm/lateral', Float32, self.callback, queue_size=1)
+
     
-        
-    def run(self, v_0, theta_ref, theta_hat, prev_e, prev_int, delta_t):
+    # def run(self, error, v_0, theta_ref, theta_hat, prev_e, prev_int, delta_t):
+    def run(self, error, delta_t):
         """
         Args:
             v_0 (:double:) linear Duckiebot speed (given).
@@ -42,28 +42,23 @@ class PIDController:
             e (:double:) current tracking error (automatically becomes prev_e_y at next iteration).
             e_int (:double:) current integral error (automatically becomes prev_int_y at next iteration).
         """
-        # A - Place your code here 
-        
-        
-        e = self.error
+        # A - Place your code here     
         # Tracking error
-        P = self.Kd * e
+        P = self.Kd * error
 
         # integral of the error
         # anti-windup - preventing the integral error from growing too much
-        I = self.Ki*(self.prev_int + e *delta_t)
-
+        I = self.Ki*(self.prev_int + error *delta_t)
+        self.prev_int = I
         e_int = max(min(I, 1), -1)
 
         # derivative of the error
-        D = self.Kd*((e - prev_e)/delta_t)
-        
-
+        D = self.Kd*((error - self.prev_e)/delta_t)
+        self.prev_e = error
         # PID controller for omega
-        omega = P + I + D 
-
-
-        return v_0, omega, e, e_int
+        omega = P + I + D        
+        self
+        return omega, error, e_int
     
     def set_param(self, params)->None :
         self.Kp = params['Kp']
@@ -108,6 +103,7 @@ class WrapperController(DTROS):
         self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
 
     def callback(self, msg) -> None:
+        rospy.loginfo("Running callback")
         try:
             
             # Set controller paramters (can by changed during tune process)
@@ -119,16 +115,17 @@ class WrapperController(DTROS):
             error = msg.data
             
             delta_t = self.delta_t.value
-            omega = self.controller.compute_control(error, delta_t)
+            omega,error,e_int = self.controller.run(error, self.delta_t)
             # Scalling output form controller
             self.twist.omega = self. omega_max.value * self.twist.omega
 
             # C - Place your code here 
             # Add header timestamp
+
             
-            
-            # Publish controlll
-            
+            # Publish control
+
+            self.control_pub.publish(Twist2DStamped(omega=0, v=1))
 
         except Exception as e:
             rospy.logerr("Error: {0}".format(e))

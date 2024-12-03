@@ -22,5 +22,6 @@ docker -H "${1}.local" \
     run -it --rm \
     --network host \
     -e VEHICLE_NAME=${1} \
+    -v //home/student/Desktop/a/LFRobotics/Duckietown/First/DTF/packages:/packages \
     ${IMAGE_NAME} \
     /bin/bash

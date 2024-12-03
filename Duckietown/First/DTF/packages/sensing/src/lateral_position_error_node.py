@@ -64,6 +64,7 @@ class LateralPositionError(DTROS):
         rospy.loginfo("Follow line color: {0}".format( self.color.value['name'] ))
 
     def callback(self, msg) -> None:
+        rospy.loginfo("Lorem ipsum")
         try:
 
             
