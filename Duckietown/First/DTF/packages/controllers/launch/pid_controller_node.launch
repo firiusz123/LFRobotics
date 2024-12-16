@@ -11,14 +11,13 @@
 
             <!-- Subscribe normalize error -->
             <!-- # D - Place your code here  -->
-            <remap from="~error/raw/lateral" to="~error" />
+            <remap from="~error" to="/$(arg veh)/lateral_position_error_node/error/norm/lateral" />
 
             <!-- Publis to car command topic -->
             <remap from="~car_cmd" to="/$(arg veh)/joy_mapper_node/car_cmd" />
 
             <!-- Load default values -->
-            <rosparam command="load" file="$(find controllers)/config/$(arg node_name)/default.yaml" />
-        
+            <rosparam command="load" file="$(find controllers)/config/$(arg node_name)/default.yaml" />        
         </node>
     </group>
 

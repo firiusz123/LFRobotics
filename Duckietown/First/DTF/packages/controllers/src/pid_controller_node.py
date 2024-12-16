@@ -27,7 +27,7 @@ class PIDController:
 
     
     # def run(self, error, v_0, theta_ref, theta_hat, prev_e, prev_int, delta_t):
-    def run(self, error, delta_t):
+    def run(self, theta_ref, theta_hat, delta_t):
         """
         Args:
             v_0 (:double:) linear Duckiebot speed (given).
@@ -44,7 +44,8 @@ class PIDController:
         """
         # A - Place your code here     
         # Tracking error
-        P = self.Kd * error
+        error = -(theta_ref-theta_hat)
+        P = self.Kp * error
 
         # integral of the error
         # anti-windup - preventing the integral error from growing too much
@@ -57,7 +58,7 @@ class PIDController:
         self.prev_e = error
         # PID controller for omega
         omega = P + I + D        
-        self
+        
         return omega, error, e_int
     
     def set_param(self, params)->None :
@@ -103,7 +104,7 @@ class WrapperController(DTROS):
         self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
 
     def callback(self, msg) -> None:
-        rospy.loginfo("Running callback")
+        rospy.loginfo(f"Running callback with error {msg.data}")
         try:
             
             # Set controller paramters (can by changed during tune process)
@@ -112,20 +113,22 @@ class WrapperController(DTROS):
 
             # Compute controll
             # B - Place your code here 
-            error = msg.data
+           
             
-            delta_t = self.delta_t.value
-            omega,error,e_int = self.controller.run(error, self.delta_t)
+            self.twist.omega,error,e_int = self.controller.run(0.0, msg.data, self.delta_t.value)
             # Scalling output form controller
-            self.twist.omega = self. omega_max.value * self.twist.omega
+
+            self.twist.omega = 10 * msg.data
+            self.twist.v = self.v_max.value
+
+            #self.twist.omega = self.omega_max.value * self.twist.omega
 
             # C - Place your code here 
             # Add header timestamp
 
             
             # Publish control
-
-            self.control_pub.publish(Twist2DStamped(omega=0, v=1))
+            self.control_pub.publish(self.twist)
 
         except Exception as e:
             rospy.logerr("Error: {0}".format(e))

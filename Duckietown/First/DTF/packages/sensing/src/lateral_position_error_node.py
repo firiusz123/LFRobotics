@@ -60,11 +60,11 @@ class LateralPositionError(DTROS):
         # Transformed image
         self.pub_debug_img = rospy.Publisher('~debug/image/out/compressed', CompressedImage, queue_size=1)
 
-        rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor))
-        rospy.loginfo("Follow line color: {0}".format( self.color.value['name'] ))
+        # rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor))
+        # rospy.loginfo("Follow line color: {0}".format( self.color.value['name'] ))
 
     def callback(self, msg) -> None:
-        rospy.loginfo("Lorem ipsum")
+        # rospy.loginfo("Lorem ipsum")
         try:
 
             
@@ -90,7 +90,7 @@ class LateralPositionError(DTROS):
 
             # Mask image
             result_mask = cv2.bitwise_and(image, image, mask=full_mask)
-            rospy.loginfo("Lorem ipsum")
+            # rospy.loginfo("Lorem ipsum")
 
             # Cut image, only consider 75% of image area
             # D - Place your code here       
@@ -124,13 +124,13 @@ class LateralPositionError(DTROS):
             
             cy_0 = ( self.search_area.value['bottom'] - self.search_area.value['top'] ) // 2   
             cx_0 = self.image_param.value['width'] // 2
-            rospy.loginfo("............................................................")
-            rospy.loginfo(f"CX {cx}  CY {cy} CX_0 {cx_0} CY_0 {cy_0} MIN {self.min} MAX {self.max}")
-            rospy.loginfo("............................................................")
+            # rospy.loginfo("............................................................")
+            # rospy.loginfo(f"CX {cx}  CY {cy} CX_0 {cx_0} CY_0 {cy_0} MIN {self.min} MAX {self.max}")
+            # rospy.loginfo("............................................................")
             
             # Estimate error
             # F - Place your code here
-            self.error['raw'] = (cx_0 - cx) + (cy_0 - cy)
+            self.error['raw'] = (cx_0 - cx)
 
             if self.error['raw'] > self.max:
                 self.max = self.error['raw']
