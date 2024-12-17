@@ -1,0 +1,20 @@
+v_max     : 0.4
+omega_max : 8.0
+
+nn_model_path : '/code/catkin_ws/src/DTF/assets/nn_models'
+nn_model_name : 'model-v4-yellow.h5'
+
+image_crop : {
+  start : 300,
+  stop  : 500
+}
+
+image_blur_ksize : {
+  x : 3, 
+  y : 3
+}
+
+image_resize : {
+  width : 80,
+  height: 60
+}
