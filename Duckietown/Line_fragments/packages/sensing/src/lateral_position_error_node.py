@@ -3,6 +3,7 @@
 import rospy
 import cv2
 import cv_bridge
+import threading
 import numpy as np
 from math import sqrt
 print("Lorem ipsum")
@@ -16,7 +17,7 @@ from duckietown.dtros import \
 
 # import messages and services
 from sensor_msgs.msg import CompressedImage
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float32MultiArray, Float32
 
 class LateralPositionError(DTROS):
 
@@ -25,10 +26,14 @@ class LateralPositionError(DTROS):
             node_name=node_name,
             node_type=NodeType.PERCEPTION
         )
-
+        self.centers = []
         self.points = []
         self.points1 = []
         self.points2 = []
+        self.polyFunction = None
+        self.zeroPoint = [320 , 380]
+        self.max = -float('inf')
+        self.min = float('inf')
         # Read color mask  
         self.color = DTParam('~color', param_type=ParamType.DICT)
 
@@ -45,10 +50,14 @@ class LateralPositionError(DTROS):
         self.normalize_factor = float(1.0 / (self.image_param.value['width'] / 2.0))
         
         self.cvbridge = cv_bridge.CvBridge()
-
-        # Messages
+        
         self.error = {'raw' : None, 'norm' : None}
 
+        # Publishers
+        self.pub_error = {
+            'raw'     : rospy.Publisher('~error/raw/lateral', Float32, queue_size=1),
+            'norm'    : rospy.Publisher('~error/norm/lateral', Float32, queue_size=1)
+        }
         # Subscribe to image topic
         self.sub_image = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
         
@@ -63,6 +72,46 @@ class LateralPositionError(DTROS):
 
         # rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor))
         # rospy.loginfo("Follow line color: {0}".format( self.color.value['name'] ))
+
+    def polyfit(self):
+        def notNone(object):
+            return object is not None
+
+        filteredCenters = filter(notNone, self.points)
+        x_points, y_points = [], []
+        centers = []
+        for element in filteredCenters:
+            centers.append(element)
+        if len(centers):
+            x_points, y_points = zip(*centers)
+        poly_degree = 3
+        
+        # Create an event to handle the timeout
+        timeout_event = threading.Event()
+
+        def fit_poly():
+            try:
+                np.seterr(all='ignore')  # Ignore warnings
+                poly = np.polyfit(x_points, y_points, poly_degree)
+                self.polyFunction = np.poly1d(poly)
+                timeout_event.set()  # Mark the event as finished
+            except Exception as e:
+                rospy.loginfo(e)
+
+        # Start the thread to run polyfit
+        polyfit_thread = threading.Thread(target=fit_poly)
+        polyfit_thread.start()
+
+        # Wait for the thread to complete or timeout after 0.3 seconds
+        if not timeout_event.wait(timeout=0.3):
+            rospy.loginfo("Polyfit computation timed out, leaving polyFunction unchanged")
+            # Optionally, you can also terminate the thread if needed
+            # However, Python does not have a clean way to kill threads directly, so it is better to let them finish naturally
+        else:
+            rospy.loginfo("Polyfit computation completed successfully.")
+            polyfit_thread.join()  
+
+
     def chunk_image(self,image):
         chunks = []
         top = self.search_area.value['top']
@@ -86,7 +135,7 @@ class LateralPositionError(DTROS):
         if contours:
             largest_contour = max(contours, key=cv2.contourArea)
         else:
-            print("Part omited")
+            # print("Part omited")
             return None
         # Calculate moments for the largest contour
         
@@ -97,9 +146,9 @@ class LateralPositionError(DTROS):
             # Calculate the center of mass (centroid)
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
-            print(f"Center of Mass (Centroid): ({cx}, {cy})")
+            # print(f"Center of Mass (Centroid): ({cx}, {cy})")
         else:
-            print("Part omited")
+            # print("Part omited")
             return None
         return (cx,cy)
     
@@ -135,7 +184,7 @@ class LateralPositionError(DTROS):
                     centers.append((center_point[0],center_point[1]+dh*i+top))
                 else:
                     centers.append(None)
-            rospy.loginfo(f"Calculated centers {centers}")
+            # rospy.loginfo(f"Calculated centers {centers}")
             self.points = []
             counter = 0
             acc_x = 0
@@ -153,15 +202,18 @@ class LateralPositionError(DTROS):
                     counter = 0 
             if counter > 0:
                 self.points.append((acc_x/counter,acc_y/counter))
+            self.centers = centers
             self.points2 = self.points1
             self.points1 = self.points
-            # Publish error
-            rospy.loginfo(f"Publishing data {self.points}")
-            # self.pub_error['raw'].publish(self.error['raw'])
-            # self.pub_error['norm'].publish(self.error['norm'])
+
+            
+            
             # DEBUG
-            x, y = zip(*self.points)
+            x, y = [], []
+            if self.points:
+                x, y = zip(*self.points)
             x, y = list(x),list(y)
+            self.polyfit()
             msg_x = Float32MultiArray()
             msg_x.data = x
             msg_y = Float32MultiArray()
@@ -176,34 +228,54 @@ class LateralPositionError(DTROS):
                 for i,center in enumerate(self.points):
                     if center:
                         cv2.circle(image, (int(center[0]), int(center[1])), 10, ((i*20)%256,255,0), -1)
-                # if self.points1:
-                #     for i,center in enumerate(self.points):
-                #         if center:
-                #             cv2.circle(image, (int(center[0]), int(center[1])), 10, (0,255,(i*20)%256), -1)
+                # draw_x = np.linspace(min(x) , max(x) , int(max(x)-min(x)))
+                draw_x = np.linspace(0 , 640, 640)
+                draw_y = self.polyFunction(draw_x)
+                
+                
 
-                # if self.points2:
-                #     for i,center in enumerate(self.points):
-                #         if center:
-                #             cv2.circle(image, (int(center[0]), int(center[1])), 10, (255,(i*20)%256,0), -1)
+                intersectionPoints = (self.polyFunction - self.zeroPoint[1]).roots
+                for intersection in intersectionPoints:
+                    cv2.circle(image, (int(intersection), self.zeroPoint[1]), 10, (0,0,255), -1)
+                cv2.circle(image, (self.zeroPoint[0], int(self.zeroPoint[1])), 10, (255,0,255), -1)
+                
+                            
+                candidateError = float('inf')
+                for intersection in intersectionPoints:
+                    candidateError = min(candidateError,(self.zeroPoint[0] - max(intersectionPoints))).real
+                self.error['raw'] = candidateError
 
+                if self.error['raw'] > self.max:
+                    self.max = self.error['raw']
+                if self.error['raw'] < self.min:
+                    self.min = self.error['raw']
+
+                if self.max != self.min:
+                    norm = 2 * (self.error['raw'] - self.min) / (self.max - self.min) - 1
+                else:
+                    norm = 0  # Or any default normalized value
+
+
+                self.error['norm'] = norm.real
+                
+                # Publish error
+                # G - Place your code here
+
+                rospy.loginfo(f"Publishing data {self.error['raw']} {self.error['norm']}")
+                self.pub_error['raw'].publish(self.error['raw'])
+                self.pub_error['norm'].publish(self.error['norm'])
+            
+
+                draw_points = (np.asarray([draw_x, draw_y]).T).astype(np.int32) 
+                #cv2.circle(image, (int(self.xpoint), int(self.polyFunction(self.xpoint))), 10, (255,0,0), -1)
+                cv2.polylines(image, [draw_points], False,color=(255,0,0) , thickness= 2) 
                 # Add error value to image
                 cv2.rectangle(image, (0, 0), (self.image_param.value['width'], 50), (255,255,255), -1)
 
-                cv2.putText(image, "Points : " + str(self.points), 
+                cv2.putText(image, "Points : " + str(self.error['norm']), 
                     org=(10,20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,0,0), fontScale=0.5, 
-                    thickness=1, lineType=cv2.LINE_AA)
 
-                # cv2.circle(result_mask, (int(cx), int(cy) + int(self.search_area.value['top'])), 10, (0,255,0), -1)
-                # cv2.circle(result_mask, (int(cx), int(cy)), 10, (0,255,0), -1)
-                # for i in range(n-1):
-                #     cv2.line(image, 
-                #     (0, top + dh*i), (self.image_param.value['width'], top + dh*i), 
-                #     (0, 255, 0), 2)
-                #     cv2.line(image, 
-                #     (0, top + dh * (i+1)), (self.image_param.value['width'], top + dh * (i+1)), 
-                #     (0, 255, 0), 2)
-                
-                # Message data
+                    thickness=1, lineType=cv2.LINE_AA)
                 debug_out_image = self.cvbridge.cv2_to_compressed_imgmsg(np.concatenate(([image]),axis=1).reshape(
                     (self.image_param.value['height'], self.image_param.value['width'], 3)), 'jpg')
                 debug_out_image.header.stamp = rospy.Time.now()

@@ -96,7 +96,7 @@ class WrapperController(DTROS):
 
         # Subscribe to error topic
         self.error_sub = rospy.Subscriber('~error', Float32, self.callback, queue_size=1)
-        
+    
         # Message to publish
         self.twist = Twist2DStamped()
 
@@ -118,8 +118,12 @@ class WrapperController(DTROS):
             self.twist.omega,error,e_int = self.controller.run(0.0, msg.data, self.delta_t.value)
             # Scalling output form controller
 
-            self.twist.omega = 10 * msg.data
-            self.twist.v = self.v_max.value
+
+            ######## changed it to the P controller for testing 
+            self.twist.omega = 4 * msg.data
+            ########
+            
+            self.twist.v = self.v_max.value*0.6
 
             #self.twist.omega = self.omega_max.value * self.twist.omega
 

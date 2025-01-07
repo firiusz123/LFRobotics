@@ -1,0 +1,7 @@
+<launch>
+    <arg name="rosbag_file" default="2022-12-23-d3-red1.bag"/>
+    <arg name="rosbag_path" default="$(find sensing)/../../rosbag"/>
+
+    <node pkg="rosbag" type="play" name="player" output="screen" 
+        args="--loop --clock $(arg rosbag_path)/$(arg rosbag_file)"/>
+</launch>
