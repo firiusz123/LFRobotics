@@ -19,10 +19,10 @@ from duckietown.dtros import \
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Float32MultiArray, Float32
 
-class LateralPositionError(DTROS):
+class DashedLineDetector(DTROS):
 
     def __init__(self, node_name):
-        super(LateralPositionError, self).__init__(
+        super(DashedLineDetector, self).__init__(
             node_name=node_name,
             node_type=NodeType.PERCEPTION
         )
@@ -288,5 +288,5 @@ class LateralPositionError(DTROS):
 
         
 if __name__ == '__main__':
-    some_name_node = LateralPositionError(node_name='lateral_position_error_node')
+    some_name_node = DashedLineDetector(node_name='dashed_line_detection_node')
     rospy.spin()
