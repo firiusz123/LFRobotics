@@ -6,6 +6,9 @@ echo $RUN_PATH
 RED='\033[0;32m'
 NC='\033[0m' # No Color
 
+RUNDIR=$(dirname -- "$(realpath -- "$0")")
+RUNDIR="${DIR}/.."
+
 if [ -n "$1" ]
 then 
     echo -e "\n*** Run container on host and connect to duckiebot name: ${RED}${1}${NC} ***\n"
@@ -15,7 +18,7 @@ then
 
     # Start container
     docker run -it --rm \
-        -v ${PWD}:/code/catkin_ws/src/DTF \
+        -v ${RUNDIR}:/code/catkin_ws/src/DTF \
         -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
         --network host \
         --privileged \
@@ -32,7 +35,7 @@ else
 
     # Start container
     docker run -it --rm \
-        -v ${PWD}:/code/catkin_ws/src/DTF \
+        -v ${RUNDIR}:/code/catkin_ws/src/DTF \
         --network host \
         ${IMAGE_NAME} \
         /bin/bash
