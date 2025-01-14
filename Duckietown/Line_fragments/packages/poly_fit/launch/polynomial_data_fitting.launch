@@ -1,8 +1,8 @@
 <launch>
 
     <arg name="veh" value="$(env VEHICLE_NAME)" />
-    <arg name="pkg_name" value="sensing"/>
-    <arg name="node_name" default="lateral_position_error_node" />
+    <arg name="pkg_name" value="poly_fit"/>
+    <arg name="node_name" default="" />
 
     <!-- Color filter definition -->
     <arg name="color_line" default="yellow" doc="Line color"/>
