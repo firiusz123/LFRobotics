@@ -112,6 +112,49 @@ class DashedLineDetector(DTROS):
             polyfit_thread.join()  
 
 
+    def select_closest_point_reference(self,points,referencePoint):
+        def distance(a,b):
+            rospy.loginfo(f"{a} {b}")
+            return sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
+        if len(points) == 0:
+            return None
+        for starting_point in points:
+            if starting_point:
+                result = starting_point
+                break
+        min_distance = distance(result,referencePoint)
+        rospy.loginfo(f"Initial values {referencePoint} to {result} distance {min_distance}")
+        for point in points:
+            if point:    
+                point_distance = distance(point,referencePoint)
+                rospy.loginfo(f"Calculating distance {referencePoint} to {result} distance {min_distance}")
+        
+                if min_distance < point_distance:
+                    min_distance = point_distance
+                    result = point
+                    rospy.loginfo(f"Found new minimal distance from {referencePoint} to {result} distance {min_distance}")
+        return result
+
+
+    def select_closest_point_y(self,points,desired_y):
+        def y_distance(point, y):
+            return abs(point[1] - y)
+        if len(points) == 0:
+            return None
+        for starting_point in points:
+            if starting_point:
+                result = starting_point
+                break
+        min_distance = y_distance(result,desired_y)
+        for point in points:
+            if point:
+                point_y_distance = y_distance(point,desired_y)
+                if min_distance < point_y_distance:
+                    min_distance = point_y_distance
+                    result = point
+        return result
+
+
     def chunk_image(self,image):
         chunks = []
         top = self.search_area.value['top']
@@ -156,7 +199,7 @@ class DashedLineDetector(DTROS):
         try:           
             # Read input image
             image = self.cvbridge.compressed_imgmsg_to_cv2(msg)
-
+            image = cv2.blur(image,(5,5))
             # Convert image to HSV color space
             image_hsv = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
 
@@ -176,6 +219,7 @@ class DashedLineDetector(DTROS):
             bottom = self.search_area.value['bottom']
             n = self.search_area.value['n']
             dh = (bottom-top)//n
+
             # Calculate the center points of each chunk
             centers = []
             for i,chunk in enumerate(chunks):
@@ -184,8 +228,8 @@ class DashedLineDetector(DTROS):
                     centers.append((center_point[0],center_point[1]+dh*i+top))
                 else:
                     centers.append(None)
-            # rospy.loginfo(f"Calculated centers {centers}")
             self.points = []
+            # Calculate centers of line strips
             counter = 0
             acc_x = 0
             acc_y = 0
@@ -221,10 +265,7 @@ class DashedLineDetector(DTROS):
             self.points_pub['x'].publish(msg_x)
             self.points_pub['y'].publish(msg_y)
             if self.pub_debug_img.anybody_listening():
-                # Add circle in point of center of mass
-                # for i,points in enumerate(self.points):
-                #     cv2.circle(image, (int(points[0]), int(points[1]) + int(self.search_area.value['top'])), 10, (i*10,255,0), -1)
-                
+
                 for i,center in enumerate(self.points):
                     if center:
                         cv2.circle(image, (int(center[0]), int(center[1])), 10, ((i*20)%256,255,0), -1)
@@ -233,16 +274,24 @@ class DashedLineDetector(DTROS):
                 draw_y = self.polyFunction(draw_x)
                 
                 
+                # Calculate intersection points
+                intersectionXValues = (self.polyFunction - self.zeroPoint[1]).roots
+                intersectionPoints = [ (x,self.zeroPoint[1]) for x in intersectionXValues ]
+                # Get all of the green point from line fragments to 
+                closestLinePoint = self.select_closest_point_y(self.points,self.zeroPoint[1])
 
-                intersectionPoints = (self.polyFunction - self.zeroPoint[1]).roots
-                for intersection in intersectionPoints:
+                # Get the closest point from intersection points to the one calculated previously
+                extendedLinePoint = self.select_closest_point_reference(intersectionPoints,closestLinePoint)
+                
+                for intersection in intersectionXValues:
                     cv2.circle(image, (int(intersection), self.zeroPoint[1]), 10, (0,0,255), -1)
                 cv2.circle(image, (self.zeroPoint[0], int(self.zeroPoint[1])), 10, (255,0,255), -1)
-                
+            
+                cv2.circle(image, (int(extendedLinePoint[0]), int(extendedLinePoint[1])), 10, (255,255,255), -1)
                             
                 candidateError = float('inf')
-                for intersection in intersectionPoints:
-                    candidateError = min(candidateError,(self.zeroPoint[0] - max(intersectionPoints))).real
+                for intersectionX in intersectionXValues:
+                    candidateError = min(candidateError,(self.zeroPoint[0] - max(intersectionXValues))).real
                 self.error['raw'] = candidateError
 
                 if self.error['raw'] > self.max:
