@@ -1,6 +1,6 @@
 color: {
   name  : "yellow",
-  lower1: [10, 50, 100],
+  lower1: [30, 106, 0],
   upper1: [100, 255, 255],
   lower2: [0, 0, 0],
   upper2: [0, 0, 0]

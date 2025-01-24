@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+
 import rospy
 import cv2
 import cv_bridge
@@ -31,9 +32,9 @@ class DashedLineDetector(DTROS):
         self.points1 = []
         self.points2 = []
         self.polyFunction = None
-        self.zeroPoint = [320 , 380]
-        self.max = -float('inf')
-        self.min = float('inf')
+        self.zeroPoint = [100 , 380]
+        self.max = 300
+        self.min = -300
         # Read color mask  
         self.color = DTParam('~color', param_type=ParamType.DICT)
 
@@ -76,6 +77,10 @@ class DashedLineDetector(DTROS):
     def polyfit(self):
         def notNone(object):
             return object is not None
+        
+        # as deafault we can assume degree of 3 
+        poly_degree = 3
+        threshold_triggered = 0
 
         filteredCenters = filter(notNone, self.points)
         x_points, y_points = [], []
@@ -84,9 +89,28 @@ class DashedLineDetector(DTROS):
             centers.append(element)
         if len(centers):
             x_points, y_points = zip(*centers)
-        poly_degree = 3
-        
-        # Create an event to handle the timeout
+            
+            for i in range(len(centers) - 1): 
+                v1 = (x_points[i] , y_points[i])
+                v2 = (x_points[1+1] - x_points[i]   , y_points[i+1] - y_points[i])
+                dot = v1[0] * v2[0] + v1[1] * v2[1]
+                mag1 = np.sqrt(v1[0]**2 + v1[1]**2)
+                mag2 = np.sqrt(v2[0]**2 + v2[1]**2)
+                if mag1 == 0 or mag2 == 0:
+                    return 0  
+                angle_rad = np.arccos(dot / (mag1 * mag2))
+                angle_deg = np.degrees(angle_rad)
+                if angle_deg <= 2:
+                    threshold_triggered = 1
+                else:
+                    threshold_triggered = 0
+
+        if not threshold_triggered:
+            poly_degree = 3 
+        else:
+            poly_degree = 1
+        # Create an event to
+        #for center in centers:  handle the timeout
         timeout_event = threading.Event()
 
         def fit_poly():
@@ -97,24 +121,24 @@ class DashedLineDetector(DTROS):
                 timeout_event.set()  # Mark the event as finished
             except Exception as e:
                 rospy.loginfo(e)
+                pass
 
         # Start the thread to run polyfit
         polyfit_thread = threading.Thread(target=fit_poly)
         polyfit_thread.start()
 
         # Wait for the thread to complete or timeout after 0.3 seconds
-        if not timeout_event.wait(timeout=0.3):
+        if not timeout_event.wait(timeout=0.05):
             rospy.loginfo("Polyfit computation timed out, leaving polyFunction unchanged")
             # Optionally, you can also terminate the thread if needed
             # However, Python does not have a clean way to kill threads directly, so it is better to let them finish naturally
         else:
-            rospy.loginfo("Polyfit computation completed successfully.")
+            # rospy.loginfo("Polyfit computation completed successfully.")
             polyfit_thread.join()  
 
 
     def select_closest_point_reference(self,points,referencePoint):
         def distance(a,b):
-            rospy.loginfo(f"{a} {b}")
             return sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
         if len(points) == 0:
             return None
@@ -123,16 +147,12 @@ class DashedLineDetector(DTROS):
                 result = starting_point
                 break
         min_distance = distance(result,referencePoint)
-        rospy.loginfo(f"Initial values {referencePoint} to {result} distance {min_distance}")
         for point in points:
             if point:    
                 point_distance = distance(point,referencePoint)
-                rospy.loginfo(f"Calculating distance {referencePoint} to {result} distance {min_distance}")
-        
-                if min_distance < point_distance:
+                if min_distance > point_distance:
                     min_distance = point_distance
                     result = point
-                    rospy.loginfo(f"Found new minimal distance from {referencePoint} to {result} distance {min_distance}")
         return result
 
 
@@ -149,7 +169,7 @@ class DashedLineDetector(DTROS):
         for point in points:
             if point:
                 point_y_distance = y_distance(point,desired_y)
-                if min_distance < point_y_distance:
+                if min_distance > point_y_distance:
                     min_distance = point_y_distance
                     result = point
         return result
@@ -249,6 +269,7 @@ class DashedLineDetector(DTROS):
             self.centers = centers
             self.points2 = self.points1
             self.points1 = self.points
+            self.angleThreshold = 1
 
             
             
@@ -269,13 +290,13 @@ class DashedLineDetector(DTROS):
                 for i,center in enumerate(self.points):
                     if center:
                         cv2.circle(image, (int(center[0]), int(center[1])), 10, ((i*20)%256,255,0), -1)
-                # draw_x = np.linspace(min(x) , max(x) , int(max(x)-min(x)))
-                draw_x = np.linspace(0 , 640, 640)
+                draw_x = np.linspace(min(x) , max(x) , int(max(x)-min(x)))
+                #draw_x = np.linspace(0 , 640, 640)
                 draw_y = self.polyFunction(draw_x)
                 
                 
                 # Calculate intersection points
-                intersectionXValues = (self.polyFunction - self.zeroPoint[1]).roots
+                intersectionXValues = (self.polyFunction - self.zeroPoint[1]).roots.real
                 intersectionPoints = [ (x,self.zeroPoint[1]) for x in intersectionXValues ]
                 # Get all of the green point from line fragments to 
                 closestLinePoint = self.select_closest_point_y(self.points,self.zeroPoint[1])
@@ -283,15 +304,18 @@ class DashedLineDetector(DTROS):
                 # Get the closest point from intersection points to the one calculated previously
                 extendedLinePoint = self.select_closest_point_reference(intersectionPoints,closestLinePoint)
                 
-                for intersection in intersectionXValues:
-                    cv2.circle(image, (int(intersection), self.zeroPoint[1]), 10, (0,0,255), -1)
+                #for intersection in intersectionXValues:
+                #    cv2.circle(image, (int(intersection), self.zeroPoint[1]), 10, (0,0,255), -1)
                 cv2.circle(image, (self.zeroPoint[0], int(self.zeroPoint[1])), 10, (255,0,255), -1)
             
                 cv2.circle(image, (int(extendedLinePoint[0]), int(extendedLinePoint[1])), 10, (255,255,255), -1)
+                
+                cv2.circle(image, (int(closestLinePoint[0]), int(closestLinePoint[1])), 15, (255,0,0), -1)
                             
                 candidateError = float('inf')
-                for intersectionX in intersectionXValues:
-                    candidateError = min(candidateError,(self.zeroPoint[0] - max(intersectionXValues))).real
+                # for intersectionX in intersectionXValues:
+                #     candidateError = min(candidateError,(self.zeroPoint[0] - max(intersectionXValues))).real
+                candidateError = self.zeroPoint[0] - closestLinePoint[0]
                 self.error['raw'] = candidateError
 
                 if self.error['raw'] > self.max:
@@ -337,5 +361,10 @@ class DashedLineDetector(DTROS):
 
         
 if __name__ == '__main__':
+    # ===================== TO BE REMOVED ===================== 
+    import warnings
+    warnings.filterwarnings("ignore")
+    # ===================== TO BE REMOVED =====================
+
     some_name_node = DashedLineDetector(node_name='dashed_line_detection_node')
     rospy.spin()
