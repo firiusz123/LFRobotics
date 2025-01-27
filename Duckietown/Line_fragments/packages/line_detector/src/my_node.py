@@ -72,3 +72,24 @@ plt.tight_layout()
 plt.show()
 
 print("Images saved as PNG files. Check the directory.")
+
+
+def detected_line_using_red_result(red_result, threshold=0.3):
+    # Convert the red_result to grayscale to count non-zero intensities
+    grayscale_red = cv2.cvtColor(red_result, cv2.COLOR_BGR2GRAY)
+
+    # Count the number of non-zero pixels
+    non_zero_pixels = np.count_nonzero(grayscale_red)
+
+    # Calculate the total number of pixels in the image
+    total_pixels = grayscale_red.size
+
+    # Calculate the percentage of non-zero pixels (red intensity detected)
+    red_percentage = non_zero_pixels / total_pixels
+
+    # Return 1 if red intensity is at least the threshold percentage, otherwise return 0
+    return 1 if red_percentage >= threshold else 0
+
+# Example usage with red_result
+result = detected_line_using_red_result(red_result, threshold=0.10)
+print(f"Red detected in at least 10% of the image: {'Yes' if result == 1 else 'No'}")
