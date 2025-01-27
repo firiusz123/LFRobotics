@@ -4,7 +4,8 @@ import rospy
 import cv2
 import cv_bridge
 import numpy as np
-from std_msgs.msg import BoolStamped
+# from std_msgs.msg import Bool
+# from geometry_msgs import BoolStamped
 from sensor_msgs.msg import CompressedImage
 from duckietown.dtros import DTROS, DTParam, NodeType, ParamType
 
@@ -22,7 +23,7 @@ class RedLineDetector(DTROS):
         self.cvbridge = cv_bridge.CvBridge()
         self.color_line_mask = {k: np.array(v) for k, v in self.color.value.items()}
 
-        self.red_line_detected_pub = rospy.Publisher('~red_line_detection', BoolStamped, queue_size=1)
+        # self.red_line_detected_pub = rospy.Publisher('~red_line_detection', BoolStamped, queue_size=1)
 
         # Subscribe to the image topic
         self.sub_image = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
@@ -78,12 +79,12 @@ class RedLineDetector(DTROS):
             line_detected = self.process_image(image)
 
             # Create a BoolStamped message to publish the result
-            bool_msg = BoolStamped()
-            bool_msg.header.stamp = rospy.Time.now()
-            bool_msg.data = bool(line_detected)
+            # bool_msg = BoolStamped()
+            # bool_msg.header.stamp = rospy.Time.now()
+            # bool_msg.data = bool(line_detected)
 
             # Publish the result
-            self.red_line_detected_pub.publish(bool_msg)
+            # self.red_line_detected_pub.publish(bool_msg)
             rospy.loginfo(f"Line detected: {line_detected}")
 
         except cv_bridge.CvBridgeError as e:

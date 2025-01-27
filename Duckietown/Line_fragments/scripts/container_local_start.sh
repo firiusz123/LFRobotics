@@ -18,7 +18,7 @@ then
 
     # Start container
     docker run -it --rm \
-        -v ${RUNDIR}:/code/catkin_ws/src/DTF \
+        -v ${PWD}:/code/catkin_ws/src/DTF \
         -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
         --network host \
         --privileged \
@@ -35,7 +35,7 @@ else
 
     # Start container
     docker run -it --rm \
-        -v ${RUNDIR}:/code/catkin_ws/src/DTF \
+        -v ${PWD}:/code/catkin_ws/src/DTF \
         --network host \
         ${IMAGE_NAME} \
         /bin/bash
