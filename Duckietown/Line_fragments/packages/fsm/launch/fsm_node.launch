@@ -1,6 +1,6 @@
 <launch>
-    <arg name="veh" doc="Name of vehicle. ex: megaman"/>
-    <arg name="param_file_name" default="default"/>
+    <arg name="veh" value="$(env VEHICLE_NAME)"/>
+    <arg name="param_file_name" default="city_navigation_states"/>
     <arg name="pkg_name" default="fsm"/>
     <arg name="node_name" default="fsm_node"/>
 
@@ -15,6 +15,6 @@
 
     <!-- Subscriptions -->
 
-    <remap from="~start_driving" to="~">
+    <!-- <remap from="~start_driving" to="~"> -->
 
 </launch>

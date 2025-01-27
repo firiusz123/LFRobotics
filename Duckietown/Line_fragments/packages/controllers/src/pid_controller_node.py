@@ -120,7 +120,7 @@ class WrapperController(DTROS):
 
 
             ######## changed it to the P controller for testing 
-            self.twist.omega = 4 * msg.data
+            self.twist.omega = 6 * msg.data
             ########
             
             self.twist.v = self.v_max.value*0.6

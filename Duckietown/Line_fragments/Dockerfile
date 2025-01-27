@@ -50,6 +50,7 @@ ENV DT_MAINTAINER "${MAINTAINER}"
 ENV DT_REPO_PATH "${REPO_PATH}"
 ENV DT_LAUNCH_PATH "${LAUNCH_PATH}"
 ENV DT_LAUNCHER "${LAUNCHER}"
+ENV ROS_PACKAGE_PATH="/code/catkin_ws/src/DTF/packages/controllers:/code/catkin_ws/src/DTF/packages/datasync:/code/catkin_ws/src/dt-ros-commons/packages/duckietown:/code/catkin_ws/src/dt-ros-commons/packages/duckietown_msgs:/code/catkin_ws/src/dt-ros-commons/packages/duckietown_protocols:/code/catkin_ws/src/dt-ros-commons/packages/ros_commons:/code/catkin_ws/src/dt-ros-commons/packages/ros_http_api:/code/catkin_ws/src/DTF/packages/sensing:/opt/ros/noetic/share:/code/catkin_ws/src/DTF/packages/controllers:/code/catkin_ws/src/DTF/packages/datasync:/code/catkin_ws/src/DTF/packages/line_detector:/code/catkin_ws/src/DTF/packages/poly_fit:/code/catkin_ws/src/DTF/packages/state_controller:/code/catkin_ws/src/DTF/packages/red_line:/code/catkin_ws/src/DTF/packages/fsm"
 
 # install apt dependencies
 COPY ./dependencies-apt.txt "${REPO_PATH}/"
@@ -74,7 +75,6 @@ RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
 COPY ./launchers/. "${LAUNCH_PATH}/"
 COPY ./launchers/default.sh "${LAUNCH_PATH}/"
 RUN dt-install-launchers "${LAUNCH_PATH}"
-
 # define default command
 CMD ["bash", "-c", "dt-launcher-${DT_LAUNCHER}"]
 

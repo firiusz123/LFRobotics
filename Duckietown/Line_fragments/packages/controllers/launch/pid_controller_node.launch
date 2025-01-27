@@ -11,7 +11,7 @@
 
             <!-- Subscribe normalize error -->
             <!-- # D - Place your code here  -->
-            <remap from="~error" to="/$(arg veh)/lateral_position_error_node/error/norm/lateral" />
+            <remap from="~error" to="/$(arg veh)/dashed_line_detection_node/error/norm/lateral" />
 
             <!-- Publis to car command topic -->
             <remap from="~car_cmd" to="/$(arg veh)/joy_mapper_node/car_cmd" />

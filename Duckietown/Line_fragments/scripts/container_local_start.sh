@@ -23,10 +23,11 @@ then
         --network host \
         --privileged \
         -e ROS_MASTER_URI=${ROS_MASTER_URI} \
-        -e ROS_IP=${ROS_IP} \
+	-e ROS_IP=${ROS_IP} \
+        -e ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH} \
         -e VEHICLE_NAME=${1} \
         ${IMAGE_NAME} \
-        /bin/bash
+	/bin/bash
 else
     echo -e "\n*** Run container on host ***\n"
 
@@ -35,10 +36,11 @@ else
 
     # Start container
     docker run -it --rm \
+	      -e ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH} \
         -v ${PWD}:/code/catkin_ws/src/DTF \
         --network host \
         ${IMAGE_NAME} \
-        /bin/bash
+	/bin/bash
 fi
 
 #https://stackoverflow.com/questions/25185405/using-gpu-from-a-docker-container
