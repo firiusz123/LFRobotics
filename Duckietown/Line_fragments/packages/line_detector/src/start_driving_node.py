@@ -17,9 +17,7 @@ class StartDriving(DTROS):
         )
         self.start_publisher = rospy.Publisher("~start_driving", BoolStamped, queue_size=1 )
         self.value = False
-    def service(self):
-
-
+    
     
 if __name__ == "__main__":
     startDriving = StartDriving()
