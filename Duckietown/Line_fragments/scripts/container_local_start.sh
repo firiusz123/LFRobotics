@@ -36,7 +36,7 @@ else
 
     # Start container
     docker run -it --rm \
-	-e ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH} \
+	      -e ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH} \
         -v ${PWD}:/code/catkin_ws/src/DTF \
         --network host \
         ${IMAGE_NAME} \

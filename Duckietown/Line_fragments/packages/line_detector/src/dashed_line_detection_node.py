@@ -184,6 +184,7 @@ class DashedLineDetector(DTROS):
         for i in range(n-1):
             chunks.append(image[top+i*dh:top+(i+1)*dh,0:self.image_param.value['width']])
         return chunks
+    
     def calculate_centers(self,image):
         
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
