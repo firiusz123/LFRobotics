@@ -91,5 +91,5 @@ def detected_line_using_red_result(red_result, threshold=0.3):
     return 1 if red_percentage >= threshold else 0
 
 # Example usage with red_result
-result = detected_line_using_red_result(red_result, threshold=0.10)
+result = detected_line_using_red_result(red_result, threshold=0.15)
 print(f"Red detected in at least 10% of the image: {'Yes' if result == 1 else 'No'}")
