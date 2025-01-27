@@ -17,7 +17,7 @@ events:
 #     trigger: False
 
 nodes:
-  line_following_node: "" # PID node
+  line_following_node: "~dashed_line_detection_node" # PID node
   # turning_node: "" # Special node for turning
 
 global_transmissions:
@@ -29,6 +29,7 @@ states:
   PARKED:
     activate_nodes:
       - idle_node
+      - line_following_node
     lights: "GREEN"
   LINE_FOLLOWING: 
     activate_nodes:

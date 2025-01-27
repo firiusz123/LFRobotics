@@ -1,5 +1,5 @@
 <launch>
-    <arg name="veh" doc="Name of vehicle. ex: megaman"/>
+    <arg name="veh" value="$(env VEHICLE_NAME)"/>
     <arg name="pkg_name" default="fsm"/>
     <arg name="node_name" default="logic_gate_node"/>
     <arg name="city_navigation_gates" default="default"/>
