@@ -5,7 +5,7 @@ import cv2
 import cv_bridge
 import numpy as np
 # from std_msgs.msg import Bool
-from duckietown_msgs.msgs import BoolStamped
+# from duckietown_msgs.msgs import BoolStamped
 from sensor_msgs.msg import CompressedImage
 from duckietown.dtros import DTROS, DTParam, NodeType, ParamType
 
@@ -25,7 +25,7 @@ class RedLineDetector(DTROS):
         self.cvbridge = cv_bridge.CvBridge()
         self.color_line_mask = {k: np.array(v) for k, v in self.color.value.items()}
 
-        self.red_line_detected_pub = rospy.Publisher('~red_line_detection', BoolStamped, queue_size=1)
+        # self.red_line_detected_pub = rospy.Publisher('~red_line_detection', BoolStamped, queue_size=1)
 
         # Subscribe to the image topic
         self.sub_image = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
@@ -87,7 +87,7 @@ class RedLineDetector(DTROS):
 
     def process_image(self, image):
         # Crop the top half of the image (retain only the bottom half)
-        height, width, _ = self.image_param.value['height'], self.image_param.value['width']
+        height, width = self.image_param.value['height'], self.image_param.value['width']
         cropped_image = image[height // 2:, :]  # Retain only the bottom half
 
         # Apply Gaussian Blur to smooth the image
@@ -122,15 +122,17 @@ class RedLineDetector(DTROS):
 
             # Process the image to check if the red line is detected
             lineInThreshold = self.process_image(image)
+            rospy.loginfo(self.calculate_center(image))
             lineInCenter = self.check_tolerance(self.calculate_center(image))
+
             # Create a BoolStamped message to publish the result
             lineDetected = lineInThreshold and lineInCenter
-            bool_msg = BoolStamped()
-            bool_msg.header.stamp = rospy.Time.now()
-            bool_msg.data = bool(lineDetected)
+            # bool_msg = BoolStamped()
+            # bool_msg.header.stamp = rospy.Time.now()
+            # bool_msg.data = bool(lineDetected)
 
             # Publish the result
-            self.red_line_detected_pub.publish(bool_msg)
+            # self.red_line_detected_pub.publish(bool_msg)
             rospy.loginfo(f"Line detected: {lineDetected}")
 
         except cv_bridge.CvBridgeError as e:
