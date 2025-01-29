@@ -57,7 +57,7 @@ class PIDController:
         D = self.Kd*((error - self.prev_e)/delta_t)
         self.prev_e = error
         # PID controller for omega
-        omega = P + I + D        
+        omega = P + I        
         
         return omega, error, e_int
     

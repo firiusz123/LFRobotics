@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import splprep, splev
 
 # Load the image (ensure the file path is correct)
-image_path = "/home/student/Documents/LFRobotics/Duckietown/Line_fragments/packages/line_detector/src/ngur2.png"  # Replace with your image file name or path
+image_path = "/home/student/Documents/LFRobotics/Duckietown/Line_fragments/packages/line_detector/src/ngur3.png"  # Replace with your image file name or path
 image = cv2.imread(image_path)
 
 if image is None:
@@ -12,15 +12,25 @@ if image is None:
     exit()
 
 # Apply Gaussian Blur to smooth the image
-blurred_image = cv2.GaussianBlur(image, (21, 21), 0)
+# Crop the top half of the image
+height, width = image.shape[:2]
+image_cropped = image[height // 2:, :]  # Keep the bottom half of the image
+
+# Apply Gaussian Blur to smooth the cropped image
+blurred_image = cv2.GaussianBlur(image_cropped, (41, 41), 0)
 
 # Convert both original and blurred images to HSV color space
-hsv_image_not_blurred = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+hsv_image_not_blurred = cv2.cvtColor(image_cropped, cv2.COLOR_BGR2HSV)
+hsv_image_blurred = cv2.cvtColor(blurred_image, cv2.COLOR_BGR2HSV)
+
+
+# Convert both original and blurred images to HSV color space
+hsv_image_not_blurred = cv2.cvtColor(image_cropped, cv2.COLOR_BGR2HSV)
 hsv_image_blurred = cv2.cvtColor(blurred_image, cv2.COLOR_BGR2HSV)
 
 # Define a more moderate HSV range for detecting yellow
-lower_yellow = np.array([25, 120, 120])  # Lower bound for yellow in HSV
-upper_yellow = np.array([40, 255, 255])  # Upper bound for yellow in HSV
+lower_yellow = np.array([21, 106, 0])  # Lower bound for yellow in HSV
+upper_yellow = np.array([100, 255, 255])  # Upper bound for yellow in HSV
 
 # Create masks for the yellow color range
 yellow_mask_not_blurred = cv2.inRange(hsv_image_not_blurred, lower_yellow, upper_yellow)
@@ -30,7 +40,7 @@ yellow_mask_blurred = cv2.inRange(hsv_image_blurred, lower_yellow, upper_yellow)
 combined_yellow_mask = cv2.bitwise_and(yellow_mask_not_blurred, yellow_mask_blurred)
 
 # Apply the combined mask to the original image
-yellow_result = cv2.bitwise_and(image, image, mask=combined_yellow_mask)
+yellow_result = cv2.bitwise_and(image_cropped, image_cropped, mask=combined_yellow_mask)
 
 # Convert yellow_result to grayscale (for contour detection)
 gray_yellow_result = cv2.cvtColor(yellow_result, cv2.COLOR_BGR2GRAY)
@@ -75,6 +85,8 @@ def fit_spline(points):
 
     return x_smooth, y_smooth
 
+points = [(x, y + height // 2) for x, y in points]
+
 # Fit the spline
 x_smooth, y_smooth = fit_spline(points)
 
@@ -89,6 +101,7 @@ for x, y in zip(x_smooth, y_smooth):
 
 # Print the intersection points
 print(f"Intersection points with y = {y_intersection}:", intersection_points)
+
 
 # Display images using matplotlib
 plt.figure(figsize=(8, 6))
