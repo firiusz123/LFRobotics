@@ -1,44 +1,39 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import splprep, splev
 
-# Load the image (ensure the file is uploaded and path is correct)
-image_path = 'Line_fragments/packages/line_detector/src/ngur2.png'  # Change this path to your image location
+# Load the image (ensure the file path is correct)
+image_path = "/home/student/Documents/LFRobotics/Duckietown/Line_fragments/packages/line_detector/src/ngur2.png"  # Replace with your image file name or path
 image = cv2.imread(image_path)
 
 if image is None:
     print("Error: Image not found or failed to load.")
     exit()
 
-# Crop the top half of the image
-height, width, _ = image.shape
+# Apply Gaussian Blur to smooth the image
+blurred_image = cv2.GaussianBlur(image, (21, 21), 0)
 
-# Apply Gaussian Blur to smooth the cropped image
-blurred_image = cv2.GaussianBlur(image, (31, 31), 0)
-cv2.imwrite("blurred_image.png", blurred_image)  # Save blurred image
-print("Saved blurred_image.png")
-
-# Convert the blurred image to HSV color space
-hsv_image = cv2.cvtColor(blurred_image, cv2.COLOR_BGR2HSV)
+# Convert both original and blurred images to HSV color space
+hsv_image_not_blurred = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+hsv_image_blurred = cv2.cvtColor(blurred_image, cv2.COLOR_BGR2HSV)
 
 # Define a more moderate HSV range for detecting yellow
 lower_yellow = np.array([25, 120, 120])  # Lower bound for yellow in HSV
 upper_yellow = np.array([40, 255, 255])  # Upper bound for yellow in HSV
 
-# Create a mask for the yellow color range
-yellow_mask = cv2.inRange(hsv_image, lower_yellow, upper_yellow)
-cv2.imwrite("yellow_mask.png", yellow_mask)  # Save yellow mask
-print("Saved yellow_mask.png")
+# Create masks for the yellow color range
+yellow_mask_not_blurred = cv2.inRange(hsv_image_not_blurred, lower_yellow, upper_yellow)
+yellow_mask_blurred = cv2.inRange(hsv_image_blurred, lower_yellow, upper_yellow)
 
-# Apply the mask to the original (not blurred) image for clear yellow regions
-yellow_result = cv2.bitwise_and(image, image, mask=yellow_mask)
-cv2.imwrite("yellow_result.png", yellow_result)  # Save yellow result
-print("Saved yellow_result.png")
+# Combine both masks using bitwise_and
+combined_yellow_mask = cv2.bitwise_and(yellow_mask_not_blurred, yellow_mask_blurred)
+
+# Apply the combined mask to the original image
+yellow_result = cv2.bitwise_and(image, image, mask=combined_yellow_mask)
 
 # Convert yellow_result to grayscale (for contour detection)
 gray_yellow_result = cv2.cvtColor(yellow_result, cv2.COLOR_BGR2GRAY)
-cv2.imwrite("gray_yellow_result.png", gray_yellow_result)  # Save grayscale yellow result
-print("Saved gray_yellow_result.png")
 
 # Find contours on the grayscale image (or binary mask)
 contours, _ = cv2.findContours(gray_yellow_result, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -48,10 +43,8 @@ yellow_contours = np.copy(yellow_result)
 
 # Draw the contours on the yellow_result
 cv2.drawContours(yellow_contours, contours, -1, (0, 255, 0), 2)  # Green contours
-cv2.imwrite("yellow_contours.png", yellow_contours)  # Save contours image
-print("Saved yellow_contours.png")
 
-# Draw the contours and their centers of mass on the yellow_result
+# Draw the contours and their centers of mass on yellow_result
 yellow_centroids = np.copy(yellow_result)
 
 # Create a list to store the points (centroids)
@@ -67,84 +60,79 @@ for con in contours:
 
 print("Points (centroids):", points)
 
-cv2.imwrite("yellow_centroids.png", yellow_centroids)  # Save centroids image
-print("Saved yellow_centroids.png")
+# Fit a parametric spline to the centroids
+def fit_spline(points):
+    # Convert points to numpy array
+    points_array = np.array(points)
+    x_points, y_points = points_array[:, 0], points_array[:, 1]
 
-# Now, we apply polyfit to the points
-def polyfit(points, degree=3):
-    
-    # Separate x and y coordinates
-    x_points, y_points = zip(*points)
+    # Parameterize the curve using t
+    tck, u = splprep([x_points, y_points], s=0, k=3)
 
-    # Fit polynomial to the points
-    poly = np.polyfit(x_points, y_points, degree)
-    poly_function = np.poly1d(poly)
+    # Generate the smooth curve
+    u_fine = np.linspace(0, 1, 1000)  # Fine-grained parameter values
+    x_smooth, y_smooth = splev(u_fine, tck)
 
-    return poly_function, x_points, y_points
+    return x_smooth, y_smooth
 
-# Fit polynomial to the centroids
-poly_function, x_points, y_points = polyfit(points, degree=3)
+# Fit the spline
+x_smooth, y_smooth = fit_spline(points)
 
-if poly_function:
-    print("Polynomial function:", poly_function)
+# Define the horizontal line y = 100
+y_intersection = 650
 
-    # Generate x values for the fitted curve
-    x_range = np.linspace(min(x_points), max(x_points), 1000)
+# Find the point(s) on the spline where y = 100
+intersection_points = []
+for x, y in zip(x_smooth, y_smooth):
+    if abs(y - y_intersection) < 1:  # Allow a small tolerance
+        intersection_points.append((x, y))
 
-    # Generate the corresponding y values using the polynomial
-    y_range = poly_function(x_range)
+# Print the intersection points
+print(f"Intersection points with y = {y_intersection}:", intersection_points)
 
-    # Plot the fitted polynomial on the original image
-    plt.figure(figsize=(8, 6))
-    plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-    plt.scatter(x_points, y_points, color='red', label="Centroids", zorder=5)
-    plt.plot(x_range, y_range, label=f"Polyfit (Degree 3)", color='blue', linewidth=2, zorder=6)
-    plt.title("Polyfit on Centroids")
-    plt.legend()
-    plt.axis('off')
-    plt.show()
-
-# Display all images using matplotlib
-plt.figure(figsize=(12, 8))
-
-# Original Image
-plt.subplot(231)
+# Display images using matplotlib
+plt.figure(figsize=(8, 6))
 plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 plt.title("Original Image")
 plt.axis('off')
+plt.show()
 
-# Blurred Image
-plt.subplot(232)
+plt.figure(figsize=(8, 6))
 plt.imshow(cv2.cvtColor(blurred_image, cv2.COLOR_BGR2RGB))
 plt.title("Blurred Image")
 plt.axis('off')
+plt.show()
 
-# Yellow Mask
-plt.subplot(233)
-plt.imshow(yellow_mask, cmap='gray')
-plt.title("Yellow Mask")
+plt.figure(figsize=(8, 6))
+plt.imshow(combined_yellow_mask, cmap='gray')
+plt.title("Combined Yellow Mask")
 plt.axis('off')
+plt.show()
 
-# Yellow Result
-plt.subplot(234)
+plt.figure(figsize=(8, 6))
 plt.imshow(cv2.cvtColor(yellow_result, cv2.COLOR_BGR2RGB))
 plt.title("Yellow Result")
 plt.axis('off')
+plt.show()
 
-# Yellow Contours
-plt.subplot(235)
+plt.figure(figsize=(8, 6))
 plt.imshow(cv2.cvtColor(yellow_contours, cv2.COLOR_BGR2RGB))
 plt.title("Yellow Contours")
 plt.axis('off')
-
-# Yellow Centroids
-plt.subplot(236)
-plt.imshow(cv2.cvtColor(yellow_centroids, cv2.COLOR_BGR2RGB))
-plt.title("Yellow Contours with Centroids")
-plt.axis('off')
-
-plt.tight_layout()
 plt.show()
 
-# Print final output message with file names
-print("All images saved as PNG files. Check the directory.")
+plt.figure(figsize=(8, 6))
+plt.imshow(cv2.cvtColor(yellow_centroids, cv2.COLOR_BGR2RGB))
+plt.title("Yellow Centroids")
+plt.axis('off')
+plt.show()
+
+# Now show the fitted spline curve
+plt.figure(figsize=(8, 6))
+plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+plt.plot(x_smooth, y_smooth, label="Fitted Spline", color='blue', linewidth=2)
+plt.scatter(*zip(*points), color='red', label="Centroids", zorder=5)  # Plot centroids
+plt.title("Spline Fit on Centroids with Original Image")
+plt.axis('off')
+plt.legend()
+plt.show()

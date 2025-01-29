@@ -19,6 +19,7 @@ from duckietown.dtros import \
 # import messages and services
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Float32MultiArray, Float32
+from scipy.interpolate import splprep, splev
 
 class DashedLineDetector(DTROS):
 
@@ -32,7 +33,7 @@ class DashedLineDetector(DTROS):
         self.points1 = []
         self.points2 = []
         self.polyFunction = None
-        self.zeroPoint = [100 , 380]
+        self.zeroPoint = [300 , 380]
         self.max = 300
         self.min = -300
         # Read color mask  
@@ -216,68 +217,141 @@ class DashedLineDetector(DTROS):
             return None
         return (cx,cy)
     
+    def fit_spline(self, points):
+        """
+        Fits a parametric spline to the given points.
+        """
+        if not points:
+            return [], []
+        
+        points_array = np.array(points)
+        x_points, y_points = points_array[:, 0], points_array[:, 1]
+
+        # Parameterize the curve using t
+        tck, u = splprep([x_points, y_points], s=0, k=3)
+
+        # Generate the smooth curve
+        u_fine = np.linspace(0, 1, 1000)  # Fine-grained parameter values
+        x_smooth, y_smooth = splev(u_fine, tck)
+
+        return x_smooth, y_smooth
+    
     def callback(self, msg) -> None:
         try:           
             # Read input image
             image = self.cvbridge.compressed_imgmsg_to_cv2(msg)
-            image = cv2.blur(image,(5,5))
-            # Convert image to HSV color space
-            image_hsv = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
 
-            # Find follow line
-            lower_mask = cv2.inRange(image_hsv,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
-            upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
+            # Apply Gaussian Blur to smooth the image
+            blurred_image = cv2.GaussianBlur(image, (41, 41), 0)
 
-            # Combine the masks
-            full_mask = cv2.bitwise_or(lower_mask, upper_mask)
+            # Convert both original and blurred images to HSV color space
+            hsv_image_not_blurred = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+            hsv_image_blurred = cv2.cvtColor(blurred_image, cv2.COLOR_BGR2HSV)
 
-            # Mask image
-            result_mask = cv2.bitwise_and(image, image, mask=full_mask)
+            # Define a more moderate HSV range for detecting yellow
+            lower_yellow = np.array([21, 106, 0])  # Lower bound for yellow in HSV
+            upper_yellow = np.array([100, 255, 255])  # Upper bound for yellow in HSV
+
+            # Create masks for the yellow color range
+            yellow_mask_not_blurred = cv2.inRange(hsv_image_not_blurred, lower_yellow, upper_yellow)
+            yellow_mask_blurred = cv2.inRange(hsv_image_blurred, lower_yellow, upper_yellow)
+
+            # Combine both masks using bitwise_and
+            combined_yellow_mask = cv2.bitwise_and(yellow_mask_not_blurred, yellow_mask_blurred)
+
+            # Apply the combined mask to the original image
+            yellow_result = cv2.bitwise_and(image, image, mask=combined_yellow_mask)
+
+            # Convert yellow_result to grayscale (for contour detection)
+            gray_yellow_result = cv2.cvtColor(yellow_result, cv2.COLOR_BGR2GRAY)
+
+            # Find contours on the grayscale image (or binary mask)
+            contours, _ = cv2.findContours(gray_yellow_result, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            # Copy yellow_result to draw contours
+            yellow_contours = np.copy(yellow_result)
+
+            # Draw the contours on the yellow_result
+            cv2.drawContours(yellow_contours, contours, -1, (0, 255, 0), 2)  # Green contours
+
+            # Draw the contours and their centers of mass on yellow_result
+            yellow_centroids = np.copy(yellow_result)
+
+            self.points = []
+
+            for con in contours:
+                M = cv2.moments(con)
+                if M["m00"] != 0:
+                    cx = int(M["m10"] / M["m00"])
+                    cy = int(M["m01"] / M["m00"])
+                    self.points.append((cx, cy))  # Append centroid
+                    cv2.circle(yellow_centroids, (cx, cy), 5, (0, 0, 255), -1)  # Red circle
+
+
+
+            # image = cv2.blur(image,(5,5))
+            # # Convert image to HSV color space
+            # image_hsv = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
+
+            # # Find follow line
+            # lower_mask = cv2.inRange(image_hsv,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
+            # upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
+
+            # # Combine the masks
+            # full_mask = cv2.bitwise_or(lower_mask, upper_mask)
+
+            # # Mask image
+            # result_mask = cv2.bitwise_and(image, image, mask=full_mask)
 
             # Chunk image
-            chunks = self.chunk_image(result_mask)
-            top = self.search_area.value['top']
-            bottom = self.search_area.value['bottom']
-            n = self.search_area.value['n']
-            dh = (bottom-top)//n
-
-            # Calculate the center points of each chunk
-            centers = []
-            for i,chunk in enumerate(chunks):
-                center_point = self.calculate_centers(chunk)
-                if center_point:
-                    centers.append((center_point[0],center_point[1]+dh*i+top))
-                else:
-                    centers.append(None)
-            self.points = []
-            # Calculate centers of line strips
-            counter = 0
-            acc_x = 0
-            acc_y = 0
-            for center in centers:
-                if center:
-                    acc_x += center[0]
-                    acc_y += center[1]
-                    counter += 1
-                else:
-                    if counter > 0:
-                        self.points.append((acc_x/counter,acc_y/counter))
-                    acc_x = 0
-                    acc_y = 0
-                    counter = 0 
-            if counter > 0:
-                self.points.append((acc_x/counter,acc_y/counter))
-            self.centers = centers
-            self.points2 = self.points1
-            self.points1 = self.points
-            self.angleThreshold = 1
+            # chunks = self.chunk_image(result_mask)
+            # top = self.search_area.value['top']
+            # bottom = self.search_area.value['bottom']
+            # n = self.search_area.value['n']
+            # dh = (bottom-top)//n
+            
+            # # Calculate the center points of each chunk
+            # centers = []
+            # for i,chunk in enumerate(chunks):
+            #     center_point = self.calculate_centers(chunk)
+            #     if center_point:
+            #         centers.append((center_point[0],center_point[1]+dh*i+top))
+            #     else:
+            #         centers.append(None)
+            # self.points = []
+            # # Calculate centers of line strips
+            # counter = 0
+            # acc_x = 0
+            # acc_y = 0
+            # for center in centers:
+            #     if center:
+            #         acc_x += center[0]
+            #         acc_y += center[1]
+            #         counter += 1
+            #     else:
+            #         if counter > 0:
+            #             self.points.append((acc_x/counter,acc_y/counter))
+            #         acc_x = 0
+            #         acc_y = 0
+            #         counter = 0 
+            # if counter > 0:
+            #     self.points.append((acc_x/counter,acc_y/counter))
+            # self.centers = centers
+            # self.points2 = self.points1
+            # self.points1 = self.points
+            # self.angleThreshold = 1
 
             
             
             # DEBUG
-            x, y = [], []
-            if self.points:
-                x, y = zip(*self.points)
+            # x, y = [], []
+            # if self.points:
+            #     x, y = zip(*self.points)
+            if len(self.points) > 3:
+                x_smooth, y_smooth = self.fit_spline(self.points)
+            else:
+                rospy.logwarn("Not enough points to fit spline. Need at least 4.")
+            x, y = x_smooth, y_smooth
             x, y = list(x),list(y)
             self.polyfit()
             msg_x = Float32MultiArray()
@@ -338,7 +412,6 @@ class DashedLineDetector(DTROS):
                 rospy.loginfo(f"Publishing data {self.error['raw']} {self.error['norm']}")
                 self.pub_error['raw'].publish(self.error['raw'])
                 self.pub_error['norm'].publish(self.error['norm'])
-            
 
                 draw_points = (np.asarray([draw_x, draw_y]).T).astype(np.int32) 
                 #cv2.circle(image, (int(self.xpoint), int(self.polyFunction(self.xpoint))), 10, (255,0,0), -1)
