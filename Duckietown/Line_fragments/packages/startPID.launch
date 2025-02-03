@@ -8,9 +8,13 @@
         <arg name="color_line" value="$(arg color_line)" />
     </include>
 
-    <include file="$(find poly_fit)/launch/polynomial_data_fitting.launch">
-    </include>
+    <include file="$(find line_detector)/launch/red_line_detection_node.launch"/>
+
+    <!-- <include file="$(find poly_fit)/launch/polynomial_data_fitting.launch"> -->
+    <!-- </include> -->
 
     <include file="$(find controllers)/launch/pid_controller_node.launch"/>
+
+    
 
 </launch>
