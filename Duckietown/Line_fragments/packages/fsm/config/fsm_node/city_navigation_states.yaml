@@ -1,6 +1,6 @@
 # FOR REFERENCE CHECK https://github.com/duckietown/dt-core/
 
-initial_state: "PARKED"
+initial_state: "LINE_FOLLOWING"
 
 events:
   start_following:
@@ -17,7 +17,8 @@ events:
 #     trigger: False
 
 nodes:
-  line_following_node: "~dashed_line_detection_node" # PID node
+  line_following_node: "dashed_line_detection_node/switch" # PID node
+  led_emiter_node: "led_emiter_node/switch"
   # turning_node: "" # Special node for turning
 
 global_transmissions:
@@ -28,13 +29,13 @@ global_transmissions:
 states:
   PARKED:
     activate_nodes:
-      - idle_node
+      # - idle_node
       - line_following_node
+      - led_emiter_node
     lights: "GREEN"
   LINE_FOLLOWING: 
     activate_nodes:
       - line_following_node
-      - red_line_detector_node
     lights: "CAR_DRIVING"
   # STOPPED:
   #   active_nodes:
