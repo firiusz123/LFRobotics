@@ -9,11 +9,5 @@ image_param : {
 search_area : {
   top     : 240,
   bottom  : 500,
-}
-
-# Defines line
-line_tolerance : {
-  centerTolerance: 70,
-  centerX: 340,
-  centerY: 420
+  n: 120
 }

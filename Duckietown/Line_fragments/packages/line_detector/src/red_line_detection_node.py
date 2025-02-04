@@ -5,7 +5,7 @@ import cv2
 import cv_bridge
 import numpy as np
 # from std_msgs.msg import Bool
-# from duckietown_msgs.msgs import BoolStamped
+from duckietown_msgs.msg import BoolStamped
 from sensor_msgs.msg import CompressedImage
 from duckietown.dtros import DTROS, DTParam, NodeType, ParamType
 
@@ -25,7 +25,7 @@ class RedLineDetector(DTROS):
         self.cvbridge = cv_bridge.CvBridge()
         self.color_line_mask = {k: np.array(v) for k, v in self.color.value.items()}
 
-        # self.red_line_detected_pub = rospy.Publisher('~red_line_detection', BoolStamped, queue_size=1)
+        self.red_line_detected_pub = rospy.Publisher('~red_line_detection', BoolStamped, queue_size=1)
 
         # Subscribe to the image topic
         self.sub_image = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
@@ -83,7 +83,7 @@ class RedLineDetector(DTROS):
         # Calculate the percentage of non-zero pixels (red intensity detected)
         redPercentage = nonZeroPixels / totalPixels
 
-        return 1 if redPercentage >= threshold else 0
+        return True if redPercentage >= threshold else False
 
     def process_image(self, image):
         # Crop the top half of the image (retain only the bottom half)
@@ -127,12 +127,12 @@ class RedLineDetector(DTROS):
 
             # Create a BoolStamped message to publish the result
             lineDetected = lineInThreshold and lineInCenter
-            # bool_msg = BoolStamped()
-            # bool_msg.header.stamp = rospy.Time.now()
-            # bool_msg.data = bool(lineDetected)
+            bool_msg = BoolStamped()
+            bool_msg.header.stamp = rospy.Time.now()
+            bool_msg.data = bool(lineDetected)
 
             # Publish the result
-            # self.red_line_detected_pub.publish(bool_msg)
+            self.red_line_detected_pub.publish(bool_msg)
             rospy.loginfo(f"Line detected: {lineDetected}")
 
         except cv_bridge.CvBridgeError as e:

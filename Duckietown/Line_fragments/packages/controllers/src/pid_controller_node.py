@@ -49,8 +49,9 @@ class PIDController:
 
         # integral of the error
         # anti-windup - preventing the integral error from growing too much
-        I = self.Ki*(self.prev_int + error *delta_t)
-        self.prev_int = I
+        I = 0
+        # I = self.Ki*(self.prev_int + error *delta_t)
+        # self.prev_int = I
         e_int = max(min(I, 1), -1)
 
         # derivative of the error
@@ -115,7 +116,7 @@ class WrapperController(DTROS):
             # B - Place your code here 
            
             
-            self.twist.omega,error,e_int = self.controller.run(0.0, msg.data, self.delta_t.value)
+            pd_value,error,e_int = self.controller.run(0.0, msg.data, self.delta_t.value)
             # Scalling output form controller
 
 
@@ -125,7 +126,7 @@ class WrapperController(DTROS):
             
             self.twist.v = self.v_max.value*0.6
 
-            #self.twist.omega = self.omega_max.value * self.twist.omega
+            # self.twist.omega = self.omega_max.value * pd_value
 
             # C - Place your code here 
             # Add header timestamp
