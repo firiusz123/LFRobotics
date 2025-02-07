@@ -35,20 +35,10 @@ class DashedLineDetector(DTROS):
         self.zeroPoint = [50 , 380]
         self.max = 300
         self.min = -300
-        # Read color mask  
-        
-
-        # Convert color mask to np.array
-        
-        self.cvbridge = cv_bridge.CvBridge()
         
         self.error = {'raw' : None, 'norm' : None}
 
-        # Publishers
-        self.pub_error = {
-            'raw'     : rospy.Publisher('~error/raw/lateral', Float32, queue_size=1),
-            'norm'    : rospy.Publisher('~error/norm/lateral', Float32, queue_size=1)
-        }
+        # Publisher
         # Subscribe to image topic
         self.sub_image = rospy.Subscriber('~image/centroids', Float16MultiArray, self.callback, queue_size=1)
         
@@ -167,9 +157,9 @@ class DashedLineDetector(DTROS):
     def callback(self, msg) -> None:
         try:           
             # Read input image
-            centers = msg
+            self.points = msg
             
-            self.points = []
+            
             # Calculate centers of line strips
 
             # DEBUG
@@ -178,22 +168,7 @@ class DashedLineDetector(DTROS):
                 x, y = zip(*self.points)
             x, y = list(x),list(y)
             self.polyfit()
-            msg_x = Float32MultiArray()
-            msg_x.data = x
-            msg_y = Float32MultiArray()
-            msg_y.data = y
-            self.points_pub['x'].publish(msg_x)
-            self.points_pub['y'].publish(msg_y)
             # if self.pub_debug_img.anybody_listening():
-
-            for i,center in enumerate(self.points):
-                if center:
-                    cv2.circle(image, (int(center[0]), int(center[1])), 10, ((i*20)%256,255,0), -1)
-            #draw_x = np.linspace(min(x) , max(x) , int(max(x)-min(x)))
-            draw_x = np.linspace(0 , 640, 640)
-            draw_y = self.polyFunction(draw_x)
-            
-            
             # Calculate intersection points
             intersectionXValues = (self.polyFunction - self.zeroPoint[1]).roots.real
             intersectionPoints = [ (x,self.zeroPoint[1]) for x in intersectionXValues ]
@@ -204,11 +179,6 @@ class DashedLineDetector(DTROS):
             
             #for intersection in intersectionXValues:
             #    cv2.circle(image, (int(intersection), self.zeroPoint[1]), 10, (0,0,255), -1)
-            cv2.circle(image, (self.zeroPoint[0], int(self.zeroPoint[1])), 10, (255,0,255), -1)
-        
-            cv2.circle(image, (int(extendedLinePoint[0]), int(extendedLinePoint[1])), 10, (255,255,255), -1)
-            
-            cv2.circle(image, (int(closestLinePoint[0]), int(closestLinePoint[1])), 15, (255,0,0), -1)
                         
             candidateError = float('inf')
             # for intersectionX in intersectionXValues:
@@ -225,26 +195,10 @@ class DashedLineDetector(DTROS):
                 norm = 0  # Or any default normalized value
             self.error['norm'] = norm.real
             
-            # Publish error
-            # G - Place your code here
-            rospy.loginfo(f"Publishing data {self.error['raw']} {self.error['norm']}")
-            self.pub_error['raw'].publish(self.error['raw'])
-            self.pub_error['norm'].publish(self.error['norm'])
-        
-            draw_points = (np.asarray([draw_x, draw_y]).T).astype(np.int32) 
-            #cv2.circle(image, (int(self.xpoint), int(self.polyFunction(self.xpoint))), 10, (255,0,0), -1)
-            cv2.polylines(image, [draw_points], False,color=(255,0,0) , thickness= 2) 
-            # Add error value to image
-            cv2.rectangle(image, (0, 0), (self.image_param.value['width'], 50), (255,255,255), -1)
-            cv2.putText(image, "Points : " + str(self.error['norm']), 
-                org=(10,20), fontFace=cv2.FONT_HERSHEY_SIMPLEX, color=(0,0,0), fontScale=0.5, 
-                thickness=1, lineType=cv2.LINE_AA)
-            debug_out_image = self.cvbridge.cv2_to_compressed_imgmsg(np.concatenate(([image]),axis=1).reshape(
-                (self.image_param.value['height'], self.image_param.value['width'], 3)), 'jpg')
-            debug_out_image.header.stamp = rospy.Time.now()
-            
             # Publish transformed image
-            self.pub_debug_img.publish(debug_out_image)
+            self.error_pub.publish(self.error)
+            
+            
 
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))
