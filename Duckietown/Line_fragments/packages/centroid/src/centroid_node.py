@@ -17,7 +17,7 @@ from duckietown.dtros import \
 
 # import messages and services
 from sensor_msgs.msg import CompressedImage
-from std_msgs.msg import Float32MultiArray, Float32
+from std_msgs.msg import Float16MultiArray, Float32
 
 class DashedLineDetector(DTROS):
 
@@ -45,7 +45,7 @@ class DashedLineDetector(DTROS):
         self.sub_image = rospy.Subscriber('~image/mask/compressed', CompressedImage, self.callback, queue_size=1)
         
         # Publishers
-        self.centroids_pub = rospy.Publisher('~image/centroids', Float32MultiArray, queue_size=1)
+        self.centroids_pub = rospy.Publisher('~image/centroids', Float16MultiArray, queue_size=1)
             
 
         # rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor))

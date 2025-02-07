@@ -1,8 +1,8 @@
 <launch>
 
     <arg name="veh" value="$(env VEHICLE_NAME)" />
-    <arg name="pkg_name" value="poly_fit"/>
-    <arg name="node_name" default="" />
+    <arg name="pkg_name" value="polyfit"/>
+    <arg name="node_name" default="polyfit_node" />
 
     <!-- Color filter definition -->
     <arg name="color_line" default="yellow" doc="Line color"/>
@@ -15,10 +15,10 @@
             <remap from="~image/in/compressed" to="/$(arg veh)/camera_node/image/compressed" />
             
             <!-- Load default values -->
-            <rosparam command="load" file="$(find sensing)/config/$(arg node_name)/default.yaml" />
+            <rosparam command="load" file="$(find binmask)/config/$(arg node_name)/default.yaml" />
 
             <!-- Color filter load-->
-            <rosparam command="load" file="$(find sensing)/config/$(arg node_name)/color/$(arg color_line).yaml"/>
+            <rosparam command="load" file="$(find binmask)/config/$(arg node_name)/color/$(arg color_line).yaml"/>
 
         </node>
     </group>
