@@ -4,9 +4,12 @@ initial_state: "LINE_FOLLOWING"
 
 events:
   start_following:
-    topic: "~start_driving"
+    topic: "start_driving"
     msg_type: "BoolStamped"
     trigger: True
+
+    adaptive_cruise_control_on:
+      topic: "drive_controller_node" 
 #   red_line_detected:
 #     topic: "~stop_at_red_line" # Red line detection topic
 #     msg_type: "BoolStamped"
@@ -17,9 +20,11 @@ events:
 #     trigger: False
 
 nodes:
-  line_following_node: "dashed_line_detection_node/switch" # PID node
-  led_emiter_node: "led_emiter_node/switch"
-  # turning_node: "" # Special node for turning
+  line_following_node: "dashed_line_detection_node/switch" 
+  pid_node: "pid_controller_node/switch"
+  led_emiter_node: "led_emitter_node/switch"
+  acc_controller_node     : "acc_controller_node/switch"
+  emergency_braking_node  : "emergency_braking_node/switch"
 
 global_transmissions:
   # red_line_detected: "STOPPED"
@@ -32,10 +37,13 @@ states:
       # - idle_node
       - line_following_node
       - led_emiter_node
+      - pid_node
     lights: "GREEN"
   LINE_FOLLOWING: 
     activate_nodes:
       - line_following_node
+      - led_emiter_node
+      - pid_node
     lights: "CAR_DRIVING"
   # STOPPED:
   #   active_nodes:

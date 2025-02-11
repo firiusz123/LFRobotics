@@ -1,0 +1,23 @@
+<launch>
+
+    <arg name="veh" default="$(env VEHICLE_NAME)" />
+    <arg name="pkg_name" value="controllers"/>
+    <arg name="node_name" default="acc_controller_node" />
+
+    <group ns="$(arg veh)">  
+
+        <!-- NN controller node -->
+        <node  name="$(arg node_name)" pkg="$(arg pkg_name)" type="$(arg node_name).py" required="true" output="screen">
+            
+            <!-- Subscribe range sensor data (filtered) -->
+            <remap from="~in" to="/$(arg veh)/filter_node/range/median" />
+            
+            <!-- Load default values -->
+            <rosparam command="load" file="$(find controllers)/config/$(arg node_name)/default.yaml" />
+
+        </node>
+
+    </group>
+
+
+</launch>

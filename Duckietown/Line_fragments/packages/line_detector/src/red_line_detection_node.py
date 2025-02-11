@@ -83,7 +83,7 @@ class RedLineDetector(DTROS):
         # Calculate the percentage of non-zero pixels (red intensity detected)
         redPercentage = nonZeroPixels / totalPixels
 
-        return 1 if redPercentage >= threshold else 0
+        return True if redPercentage >= threshold else False
 
     def process_image(self, image):
         # Crop the top half of the image (retain only the bottom half)

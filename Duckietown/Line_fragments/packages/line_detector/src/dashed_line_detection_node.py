@@ -286,24 +286,48 @@ class DashedLineDetector(DTROS):
             msg_y.data = y
             self.points_pub['x'].publish(msg_x)
             self.points_pub['y'].publish(msg_y)
+
+            for i,center in enumerate(self.points):
+                if center:
+                    cv2.circle(image, (int(center[0]), int(center[1])), 10, ((i*20)%256,255,0), -1)
+            draw_x = np.linspace(min(x) , max(x) , int(max(x)-min(x)))
+            #draw_x = np.linspace(0 , 640, 640)
+            draw_y = self.polyFunction(draw_x)
+            
+            
+            # Calculate intersection points
+            intersectionXValues = (self.polyFunction - self.zeroPoint[1]).roots.real
+            intersectionPoints = [ (x,self.zeroPoint[1]) for x in intersectionXValues ]
+            # Get all of the green point from line fragments to 
+            closestLinePoint = self.select_closest_point_y(self.points,self.zeroPoint[1])
+            # Get the closest point from intersection points to the one calculated previously
+            extendedLinePoint = self.select_closest_point_reference(intersectionPoints,closestLinePoint)
+            
+            candidateError = float('inf')
+            # for intersectionX in intersectionXValues:
+            #     candidateError = min(candidateError,(self.zeroPoint[0] - max(intersectionXValues))).real
+            candidateError = self.zeroPoint[0] - closestLinePoint[0]
+            self.error['raw'] = candidateError
+            if self.error['raw'] > self.max:
+                self.max = self.error['raw']
+            if self.error['raw'] < self.min:
+                self.min = self.error['raw']
+            if self.max != self.min:
+                norm = 2 * (self.error['raw'] - self.min) / (self.max - self.min) - 1
+            else:
+                norm = 0  # Or any default normalized value
+            self.error['norm'] = norm.real
+            
+            # Publish error
+            # G - Place your code here
+            rospy.loginfo(f"Publishing data {self.error['raw']} {self.error['norm']}")
+            self.pub_error['raw'].publish(self.error['raw'])
+            self.pub_error['norm'].publish(self.error['norm'])
+            
             if self.pub_debug_img.anybody_listening():
 
-                for i,center in enumerate(self.points):
-                    if center:
-                        cv2.circle(image, (int(center[0]), int(center[1])), 10, ((i*20)%256,255,0), -1)
-                draw_x = np.linspace(min(x) , max(x) , int(max(x)-min(x)))
-                #draw_x = np.linspace(0 , 640, 640)
-                draw_y = self.polyFunction(draw_x)
+                draw_points = (np.asarray([draw_x, draw_y]).T).astype(np.int32) 
                 
-                
-                # Calculate intersection points
-                intersectionXValues = (self.polyFunction - self.zeroPoint[1]).roots.real
-                intersectionPoints = [ (x,self.zeroPoint[1]) for x in intersectionXValues ]
-                # Get all of the green point from line fragments to 
-                closestLinePoint = self.select_closest_point_y(self.points,self.zeroPoint[1])
-
-                # Get the closest point from intersection points to the one calculated previously
-                extendedLinePoint = self.select_closest_point_reference(intersectionPoints,closestLinePoint)
                 
                 #for intersection in intersectionXValues:
                 #    cv2.circle(image, (int(intersection), self.zeroPoint[1]), 10, (0,0,255), -1)
@@ -313,34 +337,7 @@ class DashedLineDetector(DTROS):
                 
                 cv2.circle(image, (int(closestLinePoint[0]), int(closestLinePoint[1])), 15, (255,0,0), -1)
                             
-                candidateError = float('inf')
-                # for intersectionX in intersectionXValues:
-                #     candidateError = min(candidateError,(self.zeroPoint[0] - max(intersectionXValues))).real
-                candidateError = self.zeroPoint[0] - closestLinePoint[0]
-                self.error['raw'] = candidateError
 
-                if self.error['raw'] > self.max:
-                    self.max = self.error['raw']
-                if self.error['raw'] < self.min:
-                    self.min = self.error['raw']
-
-                if self.max != self.min:
-                    norm = 2 * (self.error['raw'] - self.min) / (self.max - self.min) - 1
-                else:
-                    norm = 0  # Or any default normalized value
-
-
-                self.error['norm'] = norm.real
-                
-                # Publish error
-                # G - Place your code here
-
-                rospy.loginfo(f"Publishing data {self.error['raw']} {self.error['norm']}")
-                self.pub_error['raw'].publish(self.error['raw'])
-                self.pub_error['norm'].publish(self.error['norm'])
-            
-
-                draw_points = (np.asarray([draw_x, draw_y]).T).astype(np.int32) 
                 #cv2.circle(image, (int(self.xpoint), int(self.polyFunction(self.xpoint))), 10, (255,0,0), -1)
                 cv2.polylines(image, [draw_points], False,color=(255,0,0) , thickness= 2) 
                 # Add error value to image

@@ -127,15 +127,20 @@ class WrapperController(DTROS):
 
             #self.twist.omega = self.omega_max.value * self.twist.omega
 
-            # C - Place your code here 
-            # Add header timestamp
-
             
             # Publish control
+            rospy.loginfo(f"Publishing {self.twist.omega} {self.twist.v}")
             self.control_pub.publish(self.twist)
+            rospy.loginfo(f"Should publish {self.twist.omega} {self.twist.v}")
 
         except Exception as e:
             rospy.logerr("Error: {0}".format(e))
+
+    def on_switch_on(self):
+        rospy.loginfo("PID controller switched from off to on")
+
+    def on_switch_off(self): # The node will shut down before this code is run, so it's effectively useless, but it reminds us of inevitable death upon which we can take no action and after which we will serve no purpose
+        pass 
 
     def on_shutdown(self):
         # Send stop command
