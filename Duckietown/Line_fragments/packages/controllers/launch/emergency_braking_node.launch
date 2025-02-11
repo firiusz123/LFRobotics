@@ -1,0 +1,24 @@
+<launch>
+
+    <arg name="veh" value="$(env VEHICLE_NAME)" />
+    <arg name="pkg_name" value="controllers"/>
+    <arg name="node_name" default="emergency_braking_node" />
+    <arg name="file_node_name" default="emergency_braking_node" />
+    
+    <group ns="$(arg veh)">
+
+        <node  name="$(arg node_name)" pkg="$(arg pkg_name)" type="$(arg file_node_name).py" required="true" output="screen">
+            
+            <remap from="~in" to="/$(arg veh)/filter_node/range/average" />
+            <remap from="~emergency_stop" to="/$(arg veh)/wheels_driver_node/emergency_stop" />
+            
+            <!-- Publis to car command topic -->
+            <remap from="~cmd" to="/$(arg veh)/car_cmd_switch_node/cmd" />
+
+            <!-- Load default values --> 
+            <rosparam command="load" file="$(find controllers)/config/$(arg file_node_name)/default.yaml" />
+            
+        </node>
+    </group>
+
+</launch>

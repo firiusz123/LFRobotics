@@ -106,6 +106,12 @@ class NNController(DTROS):
         except Exception as e:
             rospy.logerr("Error: {0}".format(e))
     
+    def on_switch_on(self):
+        rospy.loginfo("Neurnal Network controller switched from off to on")
+
+    def on_switch_off(self): # The node will shut down before this code is run, so it's effectively useless, but it reminds us of inevitable death upon which we can take no action and after which we will serve no purpose
+        pass 
+
     def on_shutdown(self):
         # Send stop command
         self.control_pub.publish(Twist2DStamped(omega=0.0, v=0.0))

@@ -56,7 +56,7 @@ class FSMNode:
                 rospy.logwarn(f"{e}")
 
         # to change the LEDs
-        self.changePattern = rospy.ServiceProxy("~set_pattern", ChangePattern)
+        self.changePattern = rospy.ServiceProxy("/d3/led_emitter_node/set_pattern", ChangePattern)
 
         # print self.pub_dict
         # Process events definition
@@ -205,7 +205,8 @@ class FSMNode:
         if lights is not None:
             msg = String()
             msg.data = lights
-            self.changePattern(msg)
+            # Ignored because it caused errors
+            # self.changePattern(msg)
 
     def cbEvent(self, msg, event_name):
         if msg.data == self.event_trigger_dict[event_name]:
