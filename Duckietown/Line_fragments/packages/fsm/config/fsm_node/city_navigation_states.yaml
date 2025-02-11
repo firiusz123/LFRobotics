@@ -10,50 +10,39 @@ events:
 
     adaptive_cruise_control_on:
       topic: "drive_controller_node" 
-#   red_line_detected:
-#     topic: "~stop_at_red_line" # Red line detection topic
-#     msg_type: "BoolStamped"
-#     trigger: True
+  red_line_detected:
+    topic: "red_line_detection_node/red_line_detection" # Red line detection topic
+    msg_type: "BoolStamped"
+    trigger: True
 #    turn_on_intersection:
 #     topic: "~turn_on_intersection" # Turn topic
 #     mgs_type: "BoolStamped"
 #     trigger: False
 
-nodes:
-  line_following_node: "dashed_line_detection_node/switch" 
+nodes: 
   pid_node: "pid_controller_node/switch"
-  led_emiter_node: "led_emitter_node/switch"
   acc_controller_node     : "acc_controller_node/switch"
   emergency_braking_node  : "emergency_braking_node/switch"
 
 global_transmissions:
-  # red_line_detected: "STOPPED"
+  red_line_detected: "STOPPED"
   # turning_on_intersection: "TURNING"
   line_following: "LINE_FOLLOWING" 
 
 states:
   PARKED:
     activate_nodes:
-      # - idle_node
-      - line_following_node
-      - led_emiter_node
       - pid_node
     lights: "GREEN"
   LINE_FOLLOWING: 
     activate_nodes:
-      - line_following_node
-      - led_emiter_node
       - pid_node
     lights: "CAR_DRIVING"
-  # STOPPED:
-  #   active_nodes:
-  #     - turn_decision_node # Initally randomizes the turn and send the signal to move from place, publishes for turning_node to activate
-  #   lights: "RED"
-  # # EMERGENCY_STOP:
-  # #   active_nodes:
-  # #     - emergency_handler
-  # #   lights: "RED"
-  # TURNING: 
-  #   activate_nodes:
-  #     - turning_node
-  #   lights: "GREEN"
+  STOPPED:
+    active_nodes:
+      - turn_decision_node # Initally randomizes the turn and send the signal to move from place, publishes for turning_node to activate
+    lights: "RED"
+  EMERGENCY_STOP:
+    active_nodes:
+      - emergency_braking_node
+    lights: "RED"

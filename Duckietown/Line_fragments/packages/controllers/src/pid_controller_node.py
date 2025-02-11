@@ -22,9 +22,7 @@ class PIDController:
         self.prev_e = 0.0
         self.prev_int = 0.0
         # #apparently in the code when the PIDcontroll starts there is a callback with error but we cannot pass it to the run function 
-        # self.error = rospy.Subscriber('~error/raw/lateral', Float32, self.callback, queue_size=1)
-        # self.normalized = rospy.Subscriber('~error/norm/lateral', Float32, self.callback, queue_size=1)
-
+        
     
     # def run(self, error, v_0, theta_ref, theta_hat, prev_e, prev_int, delta_t):
     def run(self, theta_ref, theta_hat, delta_t):
@@ -103,7 +101,7 @@ class WrapperController(DTROS):
 
         # Publishers
         self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
-
+        rospy.loginfo(f"Subscriber {self.error_sub}")
     def callback(self, msg) -> None:
         rospy.loginfo(f"Running callback with error {msg.data}")
         try:

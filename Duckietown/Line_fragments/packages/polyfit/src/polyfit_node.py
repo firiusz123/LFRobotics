@@ -7,7 +7,6 @@ import cv_bridge
 import threading
 import numpy as np
 from math import sqrt
-print("Lorem ipsum")
 
 # import DTROS-related classes
 from duckietown.dtros import \
@@ -18,7 +17,7 @@ from duckietown.dtros import \
 
 # import messages and services
 from sensor_msgs.msg import CompressedImage
-from std_msgs.msg import Float16MultiArray, Float16
+from std_msgs.msg import Float32MultiArray, Float32
 
 class DashedLineDetector(DTROS):
 
@@ -36,14 +35,16 @@ class DashedLineDetector(DTROS):
         self.max = 300
         self.min = -300
         
+        self.poly_degree = DTParam('~degree', param_type=ParamType.DICT).value
+
         self.error = {'raw' : None, 'norm' : None}
 
         # Publisher
         # Subscribe to image topic
-        self.sub_image = rospy.Subscriber('~image/centroids', Float16MultiArray, self.callback, queue_size=1)
+        self.sub_image = rospy.Subscriber('~image/centroids', Float32MultiArray, self.callback, queue_size=1)
         
         # Publishers
-        self.error_pub = rospy.Publisher('~image/error' , Float16 , queue_size = 1)
+        self.error_pub = rospy.Publisher('~image/error' , Float32 , queue_size = 1)
         # Transformed image
         
         # rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor))
@@ -54,7 +55,7 @@ class DashedLineDetector(DTROS):
             return object is not None
         
         # as deafault we can assume degree of 3 
-        poly_degree = 3
+        poly_degree = self.poly_degree
         threshold_triggered = 0
 
         filteredCenters = filter(notNone, self.points)
@@ -81,7 +82,7 @@ class DashedLineDetector(DTROS):
                     threshold_triggered = 0
 
         if not threshold_triggered:
-            poly_degree = 3 
+            poly_degree = self.poly_degree
         else:
             poly_degree = 1
         # Create an event to
@@ -95,20 +96,18 @@ class DashedLineDetector(DTROS):
                 self.polyFunction = np.poly1d(poly)
                 timeout_event.set()  # Mark the event as finished
             except Exception as e:
-                rospy.loginfo(e)
+                rospy.logerr(e)
                 pass
 
         # Start the thread to run polyfit
         polyfit_thread = threading.Thread(target=fit_poly)
         polyfit_thread.start()
-
         # Wait for the thread to complete or timeout after 0.3 seconds
         if not timeout_event.wait(timeout=0.05):
             rospy.loginfo("Polyfit computation timed out, leaving polyFunction unchanged")
             # Optionally, you can also terminate the thread if needed
             # However, Python does not have a clean way to kill threads directly, so it is better to let them finish naturally
         else:
-            # rospy.loginfo("Polyfit computation completed successfully.")
             polyfit_thread.join()  
 
 
@@ -157,16 +156,16 @@ class DashedLineDetector(DTROS):
     def callback(self, msg) -> None:
         try:           
             # Read input image
-            self.points = msg
-            
+
+            # self.points = msg.data
             
             # Calculate centers of line strips
 
             # DEBUG
-            x, y = [], []
-            if self.points:
-                x, y = zip(*self.points)
+            merged_points = msg.data
+            x, y = merged_points[::2], merged_points[1::2]
             x, y = list(x),list(y)
+            self.points = list(zip(merged_points[::2], merged_points[1::2]))
             self.polyfit()
             # if self.pub_debug_img.anybody_listening():
             # Calculate intersection points
@@ -196,9 +195,8 @@ class DashedLineDetector(DTROS):
             self.error['norm'] = norm.real
             
             # Publish transformed image
-            self.error_pub.publish(self.error)
-            
-            
+            rospy.loginfo(f"Publishing {self.error['norm']}")
+            self.error_pub.publish(self.error['norm'])
 
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))

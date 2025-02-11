@@ -17,7 +17,7 @@ from duckietown.dtros import \
 
 # import messages and services
 from sensor_msgs.msg import CompressedImage
-from std_msgs.msg import Float16MultiArray, Float32
+from std_msgs.msg import Float32MultiArray, Float32
 
 class DashedLineDetector(DTROS):
 
@@ -45,12 +45,8 @@ class DashedLineDetector(DTROS):
         self.sub_image = rospy.Subscriber('~image/mask/compressed', CompressedImage, self.callback, queue_size=1)
         
         # Publishers
-        self.centroids_pub = rospy.Publisher('~image/centroids', Float16MultiArray, queue_size=1)
+        self.centroids_pub = rospy.Publisher('~image/centroids', Float32MultiArray, queue_size=1)
             
-
-        # rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor))
-        # rospy.loginfo("Follow line color: {0}".format( self.color.value['name'] ))
-
     def chunk_image(self,image):
         chunks = []
         top = self.search_area.value['top']
@@ -75,7 +71,6 @@ class DashedLineDetector(DTROS):
         if contours:
             largest_contour = max(contours, key=cv2.contourArea)
         else:
-            # print("Part omited")
             return None
         # Calculate moments for the largest contour
         
@@ -86,9 +81,7 @@ class DashedLineDetector(DTROS):
             # Calculate the center of mass (centroid)
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
-            # print(f"Center of Mass (Centroid): ({cx}, {cy})")
         else:
-            # print("Part omited")
             return None
         return (cx,cy)
     
@@ -125,6 +118,7 @@ class DashedLineDetector(DTROS):
                     acc_y += center[1]
                     counter += 1
                 else:
+            #publish the centers 
                     if counter > 0:
                         self.points.append((acc_x/counter,acc_y/counter))
                     acc_x = 0
@@ -135,10 +129,12 @@ class DashedLineDetector(DTROS):
             self.centers = centers
             self.angleThreshold = 3
 
-            #publish the centers 
-            self.centroids_pub.publish(self.points)
+            # Publish the centers 
+            self.send_points = Float32MultiArray()
+            self.send_points.data = [coordinate for point in self.points for coordinate in point]
+            self.centroids_pub.publish(self.send_points)
             # if self.pub_debug_img.anybody_listening()
-
+            
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))
 

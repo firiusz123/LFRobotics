@@ -2,22 +2,25 @@
 
     <arg name="veh" value="$(env VEHICLE_NAME)" />
     
+
+    <!-- START Detection nodes -->
     <arg name="color_follow_line" default="yellow" />
     <arg name="color_stop_line" default="red" />
 
-    <include file="$(find line_detector)/launch/dashed_line_detection_node.launch">
+    <include file="$(find binmask)/launch/binmask_node.launch">
         <arg name="color_line" value="$(arg color_follow_line)" />
     </include>
-    
+
+    <include file="$(find centroid)/launch/centroid_node.launch" />
+
+    <include file="$(find polyfit)/launch/polyfit_node.launch" />
+
     <include file="$(find line_detector)/launch/red_line_detection_node.launch">
-        <arg name="color_line" value="$(arg color_stop_line)" />
+        <arg name="color_line" value="$(arg color_stop_line)"/>
     </include>
+    <!-- END Detection nodes -->
 
-    <include file="$(find led_emitter)/launch/led_emitter_node.launch">
-        <arg name="veh" value="$(env VEHICLE_NAME)" />
-    </include>
-
-
+    <!-- START Control nodes -->
     <!-- PID Node -->
     <include file="$(find controllers)/launch/pid_controller_node.launch"/>
     
@@ -26,6 +29,7 @@
     
     <!-- Emergency breaking node -->
     <include file="$(find controllers)/launch/emergency_braking_node.launch"/>
+    <!-- END Control nodes -->
 
     <include file="$(find fsm)/launch/fsm_node.launch">
         <arg name="param_file_name" value="city_navigation_states" />
