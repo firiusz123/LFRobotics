@@ -1,0 +1,5 @@
+turn_parameters: {
+  v_max: 0.4,
+  omega_max: 8,
+  steps: 10
+}

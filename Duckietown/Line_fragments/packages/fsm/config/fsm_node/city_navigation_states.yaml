@@ -20,6 +20,11 @@ events:
     msg_type: "BoolStamped"
     trigger: True
   
+  resume_following: 
+    topic: "turn_controller_node/start_driving"
+    msg_type: "BoolStamped"
+    trigger: True
+
   adaptive_cruise_control_on:
     topic: "drive_controller_node/adaptive_cruise_control"
     msg_type: "BoolStamped"
@@ -62,8 +67,10 @@ states:
     current_status: "implemented"
     
   STOPPED:
+    transitions:
+      resume_following: "LANE_FOLLOWING" 
     active_nodes:
-      - turn_decision_node # Initally randomizes the turn and send the signal to move from place, publishes for turning_node to activate
+      - turn_controller_node # Initally randomizes the turn and send the signal to move from place, publishes for turning_node to activate
     lights: "RED"
     current_status: "implemented"
     

@@ -181,13 +181,14 @@ class DashedLineDetector(DTROS):
             x, y = list(x),list(y)
             self.points = list(zip(merged_points[::2], merged_points[1::2]))
             self.polyfit()
-            if self.polyFunction == None:
+            if self.polyFunction == None or len(self.points) == 0 or self.points == None:
                 return
             # if self.pub_debug_img.anybody_listening():
             # Calculate intersection points
             intersectionXValues = (self.polyFunction - self.zeroPoint[1]).roots.real
             intersectionPoints = [ (x,self.zeroPoint[1]) for x in intersectionXValues ]
-            # Get all of the green point from line fragments to 
+            # Get all of the green point from line fragments to
+             
             closestLinePoint = self.select_closest_point_y(self.points,self.zeroPoint[1])
             # Get the closest point from intersection points to the one calculated previously
             extendedLinePoint = self.select_closest_point_reference(intersectionPoints,closestLinePoint)

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import rospy
  
 from std_msgs.msg import Float32, Int32
@@ -19,30 +21,72 @@ class TimeoutNode(DTROS):
         super(TimeoutNode, self).__init__(node_name=node_name, node_type=NodeType.CONTROL)
     
         # Service that will wait a couple of seconds before moving the robot
-        self.timeout_service = rospy.Service(
-            "~set_timeout", Float32, self.turning_timeout
-        )
+        # self.timeout_service = rospy.Service(
+        #     "~set_timeout", Float32, self.turning_timeout
+        # )
         
         # Sends a signal to FSM for the robot to start moving
         self.unlock_publisher = rospy.Publisher(
             "~start_driving", BoolStamped, queue_size=1
         )
 
-        # Gets possible robot directions and initializes a turn to a random one 
-        self.turning_service = rospy.Service(
-            "~get_direction", BoolStamped, self.turn
-        )
+        # self.turning_service = rospy.Service(
+        #     "~turn_in_diretcion", BoolStamped, self.turn
+        # )
         
         self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
 
-        self.turn_options_proxy = rospy.ServiceProxy("~get_turn_options",Int32)
+        self.turn_control = Twist2DStamped()
+        
+        self.v_max = DTParam("~turn_parameters", param_type=ParamType.DICT).value['v_max']
+        self.omega_max = DTParam("~turn_parameters", param_type=ParamType.DICT).value['omega_max']
+        self.steps = DTParam("~turn_parameters", param_type=ParamType.DICT).value['steps']
+        # Gets possible robot directions and initializes a turn to a random one 
+        # self.turn_options_proxy = rospy.ServiceProxy("~get_turn_options", Int32)
 
     def turning_timeout(self):
+        
+        self.turn_control.omega = 0
+        self.turn_control.v = 0
+        self.control_pub.publish(self.turn_control)
         sleep_duration = randint(1,5)
         rospy.loginfo(f"Sleeping for {sleep_duration}")
         rospy.sleep(sleep_duration)
 
-    def turn(self, turn=None):
+    def turn(self,option):
+        try:
+        # match option:
+            # Case for going forward
+            # case 1:
+            if option == 1:
+                self.turn_control.omega = 0
+                self.turn_control.v = self.v_max # Parameter
+                self.control_pub.publish(self.turn_control)
+            # Case for turning right
+            # case 2:
+            elif option == 2:
+                omega_turn = self.omega_max / 4
+                d_omega = omega_turn / self.steps
+                self.turn_control.v = self.v_max / 2
+                for i in range(1,self.steps): # Turn steps
+                    self.turn_control.omega += d_omega * i
+                    self.control_pub.publish(self.turn_control)
+            # Case for turning left
+            # case 3:
+            if option == 3:
+                omega_turn = self.omega_max / 4
+                d_omega = omega_turn / self.steps
+                self.turn_control.v = self.v_max / 2
+                for i in range(1,self.steps): # Turn steps
+                    self.turn_control.omega -= d_omega * i
+                    self.control_pub.publish(self.turn_control)
+            # case _:
+            else:
+                rospy.logerr("Unknown turn direction")
+        except Exception as e:
+            rospy.loginfo(f"An error has occured in the tunr node:\n {e}")
+
+    def callback(self):
         """
         Function decides in which direction robot is going to turn
         """
@@ -54,7 +98,8 @@ class TimeoutNode(DTROS):
         ||--> Right turn
         |---> Left turn 
         """
-        turn_number = self.turn_options_proxy
+        # turn_number = self.turn_options_proxy
+        turn_number = randint(1,4)
         i = 1
         options = []
         while turn_number > 0:
@@ -63,30 +108,27 @@ class TimeoutNode(DTROS):
                 options.append(i)
             i += 1
             turn_number //= 2
-        match choice(options):
-            # Case for going forward
-            case 1:
-                self.control_pub.omega = 0
-                self.control_pub.v = self.v_max # Parameter
-            # Case for turning right
-            case 2:
-                omega_turn = self.omega_max / 4
-                d_omega = omega_turn / self.steps
-                self.control_pub.v = self.v_max / 2
-                for i in range(1,self.steps): # Turn steps
-                    self.control_pub.omega += d_omega * i
-                    
-            # Case for turning left
-            case 3:
-                omega_turn = self.omega_max / 4
-                d_omega = omega_turn / self.steps
-                self.control_pub.v = self.v_max / 2
-                for i in range(1,self.steps): # Turn steps
-                    self.control_pub.omega -= d_omega * i
-            case _:
-                rospy.loginfo("Can't turn anywhere, going to line following instanly")
+        self.turn(choice(options))
 
+    def transmit_resume(self):
+        message = BoolStamped()
+        message.data = True
+        for i in range(1,1000):
+            message.header.stamp = rospy.Time.now()
+            self.unlock_publisher.publish(message)
+        
+    def on_switch_on(self):
+        self.turning_timeout()
+        # self.callback()
+        self.turn_control.omega = 0
+        self.turn_control.v = self.v_max # Parameter
+        for i in range(1,5):
+            self.control_pub.publish(self.turn_control)
+        sleep_duration = randint(2,3)
+        rospy.loginfo(f"Sleeping for {sleep_duration}")
+        rospy.sleep(sleep_duration)
+        self.transmit_resume()
 
 if __name__ == "__main__":
-    timeoutNode = TimeoutNode()
+    timeoutNode = TimeoutNode("turn_controller_node")
     rospy.spin()
