@@ -12,7 +12,7 @@
             <remap from="~in/image/compressed" to="/$(arg veh)/camera_node/image/compressed" />
             
             <!-- Publish to car command topic -->
-            <remap from="~car_cmd" to="/$(arg veh)/joy_mapper_node/car_cmd" />
+            <remap from="~car_cmd" to="/$(arg veh)/car_cmd_switch_node/cmd" />
 
             <!-- Publish image to debug subject -->
             <remap from="~debug/image/compressed" to="/$(arg veh)/$(arg node_name)/debug/image/compressed" />

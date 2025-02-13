@@ -4,9 +4,9 @@
 
     <arg name="color_line" default="yellow" />
 
-    <include file="$(find line_detector)/launch/dashed_line_detection_node.launch">
+    <!-- <include file="$(find line_detector)/launch/dashed_line_detection_node.launch">
         <arg name="color_line" value="$(arg color_line)" />
-    </include>
+    </include> -->
 
     <include file="$(find controllers)/launch/nn_controller_node.launch"/>
     

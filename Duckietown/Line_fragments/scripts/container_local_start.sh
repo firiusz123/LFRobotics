@@ -22,6 +22,8 @@ then
         -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
         --network host \
         --privileged \
+        --runtime=nvidia \
+        --gpus all \
         -e ROS_MASTER_URI=${ROS_MASTER_URI} \
 	-e ROS_IP=${ROS_IP} \
         -e ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH} \
