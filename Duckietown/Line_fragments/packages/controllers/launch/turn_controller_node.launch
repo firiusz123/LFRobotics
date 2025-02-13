@@ -1,8 +1,9 @@
 <launch>
-    
-    <arg name="veh" value="$(env VEHICLE_NAME)" />
+
+    <arg name="veh" default="$(env VEHICLE_NAME)" />
     <arg name="pkg_name" value="controllers"/>
-    <arg name="node_name" default="pid_controller_node" />
+    <arg name="node_name" default="turn_controller_node" />
+
 
     <group ns="$(arg veh)">  
         <!-- PID controller node -->

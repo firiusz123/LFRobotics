@@ -7,7 +7,6 @@ import cv_bridge
 import threading
 import numpy as np
 from math import sqrt
-print("Lorem ipsum")
 
 # import DTROS-related classes
 from duckietown.dtros import \

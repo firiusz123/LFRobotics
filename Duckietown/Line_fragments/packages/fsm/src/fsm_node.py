@@ -18,12 +18,16 @@ class FSMNode:
         if not self._validateStates(self.states_dict):
             rospy.signal_shutdown(f"[{self.node_name}] Incoherent definition.")
             return
+        
+        rospy.loginfo(self.states_dict)
 
         # Load global transitions
         self.global_transitions_dict = rospy.get_param("~global_transitions", {})
         if not self._validateGlobalTransitions(self.global_transitions_dict, list(self.states_dict.keys())):
             rospy.signal_shutdown(f"[{self.node_name}] Incoherent definition.")
             return
+
+        rospy.loginfo(self.global_transitions_dict)
 
         # Setup initial state
         self.state_msg = FSMState()
@@ -38,11 +42,11 @@ class FSMNode:
         # Construct service calls
         self.srv_dict = dict()
         nodes = rospy.get_param("~nodes")
-        # rospy.loginfo(nodes)
+        rospy.loginfo(nodes)
         self.active_nodes = None
 
-        # for node_name, topic_name in list(nodes.items()):
-        #     self.pub_dict[node_name] = rospy.Publisher(topic_name, BoolStamped, queue_size=1, latch=True)
+        #for node_name, topic_name in list(nodes.items()):
+        #    self.pub_dict[node_name] = rospy.Publisher(topic_name, BoolStamped, queue_size=1, latch=True)
 
         for node_name, service_name in list(nodes.items()):
             rospy.loginfo(f"FSM waiting for service {service_name}")
@@ -56,7 +60,16 @@ class FSMNode:
                 rospy.logwarn(f"{e}")
 
         # to change the LEDs
-        self.changePattern = rospy.ServiceProxy("/d3/led_emitter_node/set_pattern", ChangePattern)
+        self.changePattern = None
+        rospy.loginfo(f"FSM waiting for service LED EMITTER")
+        try:
+            rospy.wait_for_service(
+                "led_emitter_node/set_pattern", timeout=1.0
+            )
+            self.changePattern = rospy.ServiceProxy("led_emitter_node/set_pattern", ChangePattern)
+            rospy.loginfo(f"FSM found service LED EMITTER")
+        except rospy.ROSException as e:
+            rospy.logwarn(f"{e}")
 
         # print self.pub_dict
         # Process events definition
@@ -145,7 +158,6 @@ class FSMNode:
 
     def _getActiveNodesOfState(self, state_name):
         state_dict = self.states_dict[state_name]
-        rospy.loginfo(state_dict)
         active_nodes = state_dict.get("active_nodes")
         if active_nodes is None:
             rospy.logwarn(f"[{self.node_name}] No active nodes defined for {state_name}. Deactive all nodes.")
@@ -176,7 +188,7 @@ class FSMNode:
 
     def publishState(self):
         self.pub_state.publish(self.state_msg)
-        rospy.loginfo(f"[{self.node_name}] FSMState: {self.state_msg.state}")
+        #rospy.loginfo(f"[{self.node_name}] FSMState: {self.state_msg.state}")
 
     def publishBools(self):
         active_nodes = self._getActiveNodesOfState(self.state_msg.state)
@@ -186,8 +198,7 @@ class FSMNode:
             msg.header.stamp = self.state_msg.header.stamp
             msg.data = bool(node_name in active_nodes)
             node_state = "ON" if msg.data else "OFF"
-            # rospy.loginfo("[%s] Node %s is %s in %s" %(self.node_name, node_name, node_state,
-            # self.state_msg.state))
+            # rospy.loginfo("[%s] Node %s is %s in %s" %(self.node_name, node_name, node_state, self.state_msg.state))
             if self.active_nodes is not None:
                 if (node_name in active_nodes) == (node_name in self.active_nodes):
                     continue
@@ -202,12 +213,12 @@ class FSMNode:
         self.active_nodes = copy.deepcopy(active_nodes)
 
     def updateLights(self):
-        lights = self._getLightsofState(self.state_msg.state)
-        if lights is not None:
-            msg = String()
-            msg.data = lights
-            # Ignored because it caused errors
-            # self.changePattern(msg)
+        if not(self.changePattern is None) :
+            lights = self._getLightsofState(self.state_msg.state)
+            if lights is not None:
+                msg = String()
+                msg.data = lights
+                self.changePattern(msg)
 
     def cbEvent(self, msg, event_name):
         if msg.data == self.event_trigger_dict[event_name]:

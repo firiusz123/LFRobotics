@@ -101,9 +101,11 @@ class WrapperController(DTROS):
 
         # Publishers
         self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
-        rospy.loginfo(f"Subscriber {self.error_sub}")
+    
+        self.publisher_2 = rospy.Publisher('~pid_controller_node', Twist2DStamped, queue_size=1)
+    
     def callback(self, msg) -> None:
-        rospy.loginfo(f"Running callback with error {msg.data}")
+        # rospy.loginfo(f"Running callback with error {msg.data}")
         try:
             
             # Set controller paramters (can by changed during tune process)
@@ -119,7 +121,7 @@ class WrapperController(DTROS):
 
 
             ######## changed it to the P controller for testing 
-            self.twist.omega = 6 * msg.data
+            self.twist.omega = self.omega_max.value * msg.data
             ########
             
             self.twist.v = self.v_max.value*0.6
@@ -128,9 +130,10 @@ class WrapperController(DTROS):
 
             
             # Publish control
-            rospy.loginfo(f"Publishing {self.twist.omega} {self.twist.v}")
+            # rospy.loginfo(f"PID Publishing {self.twist.omega} {self.twist.v}")
             self.control_pub.publish(self.twist)
-            rospy.loginfo(f"Should publish {self.twist.omega} {self.twist.v}")
+            self.publisher_2.publish(self.twist)
+            # rospy.loginfo(f"Should publish {self.twist.omega} {self.twist.v}")
 
         except Exception as e:
             rospy.logerr("Error: {0}".format(e))
@@ -143,12 +146,10 @@ class WrapperController(DTROS):
 
     def on_shutdown(self):
         # Send stop command
-        self.control_pub.publish(Twist2DStamped(omega=0.0, v=0.0))
-        rospy.sleep(1)
-        self.control_pub.publish(Twist2DStamped(omega=0.0, v=0.0))
-        rospy.sleep(1)
-        self.control_pub.publish(Twist2DStamped(omega=0.0, v=0.0))
-        # Wait....
+        self.twist.header.stamp = rospy.Time.now()
+        self.twist.omega = 0
+        self.twist.v = 0
+        self.control_pub.publish(self.twist)
         rospy.sleep(1)
         rospy.loginfo("Stop PIDController")
 

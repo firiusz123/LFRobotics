@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME="duckietown/dtf:latest-amd64"
+IMAGE_NAME="duckietown/line_fragments:latest-amd64"
 RUN_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
 echo $RUN_PATH
 RED='\033[0;32m'
@@ -18,7 +18,7 @@ then
 
     # Start container
     docker run -it --rm \
-        -v ${PWD}:/code/catkin_ws/src/DTF \
+        -v ${PWD}:/code/catkin_ws/src/Line_Fragmenter \
         -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
         --network host \
         --privileged \
@@ -37,7 +37,7 @@ else
     # Start container
     docker run -it --rm \
 	      -e ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH} \
-        -v ${PWD}:/code/catkin_ws/src/DTF \
+        -v ${PWD}:/code/catkin_ws/src/Line_Fragmenter \
         --network host \
         ${IMAGE_NAME} \
 	/bin/bash

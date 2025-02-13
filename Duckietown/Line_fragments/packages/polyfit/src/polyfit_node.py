@@ -26,44 +26,53 @@ class DashedLineDetector(DTROS):
             node_name=node_name,
             node_type=NodeType.PERCEPTION
         )
+        
+
+        # Desired point parameters
+        self.point_param = DTParam("~follow_point", param_type=ParamType.DICT)
+        
+        # Normalization values for error
+        self.normalizer_param = DTParam("~normalizer", param_type=ParamType.DICT)
+        
+        # Max degree of polynomial to be calculated
+        self.poly_degree = DTParam('~degree', param_type=ParamType.DICT).value
+        
         self.centers = []
         self.points = []
-        self.points1 = []
-        self.points2 = []
+
+        # Poly function and desired horizontal line that should return desired point on polynomial
         self.polyFunction = None
-        self.zeroPoint = [50 , 380]
-        self.max = 300
-        self.min = -300
+        self.zeroPoint = [ self.point_param.value["pointX"],self.point_param.value["pointY"] ]
         
-        self.poly_degree = DTParam('~degree', param_type=ParamType.DICT).value
+        # Normalization values
+        self.max = self.normalizer_param.value["maxValue"]
+        self.min = self.normalizer_param.value["minValue"]
+        
 
         self.error = {'raw' : None, 'norm' : None}
 
-        # Publisher
-        # Subscribe to image topic
+        # Subscriber to centroids topic that contains centroid points
         self.sub_image = rospy.Subscriber('~image/centroids', Float32MultiArray, self.callback, queue_size=1)
         
         # Publishers
         self.error_pub = rospy.Publisher('~image/error' , Float32 , queue_size = 1)
-        # Transformed image
         
-        # rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor))
-        # rospy.loginfo("Follow line color: {0}".format( self.color.value['name'] ))
-
     def polyfit(self):
         def notNone(object):
             return object is not None
-        
         # as deafault we can assume degree of 3 
         poly_degree = self.poly_degree
         threshold_triggered = 0
 
         filteredCenters = filter(notNone, self.points)
+        if len(self.points) == 0:
+            return
         x_points, y_points = [], []
         centers = []
         for element in filteredCenters:
             centers.append(element)
-        if len(centers) and len(centers) >2 :
+        centers_length = len(centers)
+        if centers_length and centers_length > 2 :
             x_points, y_points = zip(*centers)
             
             for i in range(len(centers) - 1): 
@@ -80,7 +89,11 @@ class DashedLineDetector(DTROS):
                     threshold_triggered = 1
                 else:
                     threshold_triggered = 0
-
+        elif centers_length == 2:
+            x_points, y_points = zip(*centers)
+            threshold_triggered = 1
+        else:
+            return
         if not threshold_triggered:
             poly_degree = self.poly_degree
         else:
@@ -96,6 +109,7 @@ class DashedLineDetector(DTROS):
                 self.polyFunction = np.poly1d(poly)
                 timeout_event.set()  # Mark the event as finished
             except Exception as e:
+                rospy.loginfo(f"Centeres: {centers} x_points: {x_points} y_points: {y_points} Degree {poly_degree} ")
                 rospy.logerr(e)
                 pass
 
@@ -154,7 +168,7 @@ class DashedLineDetector(DTROS):
     
     
     def callback(self, msg) -> None:
-        try:           
+        try:       
             # Read input image
 
             # self.points = msg.data
@@ -167,6 +181,8 @@ class DashedLineDetector(DTROS):
             x, y = list(x),list(y)
             self.points = list(zip(merged_points[::2], merged_points[1::2]))
             self.polyfit()
+            if self.polyFunction == None:
+                return
             # if self.pub_debug_img.anybody_listening():
             # Calculate intersection points
             intersectionXValues = (self.polyFunction - self.zeroPoint[1]).roots.real
@@ -182,7 +198,7 @@ class DashedLineDetector(DTROS):
             candidateError = float('inf')
             # for intersectionX in intersectionXValues:
             #     candidateError = min(candidateError,(self.zeroPoint[0] - max(intersectionXValues))).real
-            candidateError = self.zeroPoint[0] - closestLinePoint[0]
+            candidateError = self.zeroPoint[0] - extendedLinePoint[0]
             self.error['raw'] = candidateError
             if self.error['raw'] > self.max:
                 self.max = self.error['raw']
@@ -195,8 +211,11 @@ class DashedLineDetector(DTROS):
             self.error['norm'] = norm.real
             
             # Publish transformed image
-            rospy.loginfo(f"Publishing {self.error['norm']}")
-            self.error_pub.publish(self.error['norm'])
+            # rospy.loginfo(f"Publishing {self.error['norm']}")
+            msg1 = Float32()
+            msg1.data = self.error['norm']
+            # msg1.header.stamp = rospy.Time.now()
+            self.error_pub.publish(msg1)
 
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))

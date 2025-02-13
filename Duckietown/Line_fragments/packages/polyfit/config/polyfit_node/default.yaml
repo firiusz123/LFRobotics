@@ -1,15 +1,12 @@
-# # Image parameters like width and height
-# image_param : {
-#   width   : 640,
-#   height  : 480
-# }
 
-# # Two lines of search are, top is 0.75% of height 
-# # and bottom is greater 
-# search_area : {
-#   top     : 240,
-#   bottom  : 500,
-#   n: 120
-# }
+follow_point : {
+  pointX: 100,
+  pointY: 380
+}
+
+normalizer : {
+  maxValue: 300,
+  minValue: -300
+}
 
 degree: 3

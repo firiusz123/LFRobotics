@@ -13,7 +13,7 @@ search_area : {
 
 # Defines line
 line_tolerance : {
-  centerTolerance: 70,
-  centerX: 340,
-  centerY: 420
+  centerTolerance: 80,
+  centerX: 320,
+  centerY: 160
 }
