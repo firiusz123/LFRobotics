@@ -2,7 +2,7 @@
 <package format="2">
   <name>debugger</name>
   <version>0.0.0</version>
-  <description>The debuger package</description>
+  <description>The debugger package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
