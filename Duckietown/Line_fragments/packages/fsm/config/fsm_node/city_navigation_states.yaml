@@ -21,9 +21,13 @@ events:
     trigger: True
   
   resume_following: 
-    topic: "turn_controller_node/start_driving"
+    topic: "red_line_detection_node/red_line_detection" # Red line detection topic
     msg_type: "BoolStamped"
-    trigger: True
+    trigger: False
+
+    # topic: "turn_controller_node/start_driving"
+    # msg_type: "BoolStamped"
+    # trigger: True
 
   adaptive_cruise_control_on:
     topic: "drive_controller_node/adaptive_cruise_control"

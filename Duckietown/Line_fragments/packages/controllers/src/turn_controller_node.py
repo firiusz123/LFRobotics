@@ -45,10 +45,6 @@ class TimeoutNode(DTROS):
         # self.turn_options_proxy = rospy.ServiceProxy("~get_turn_options", Int32)
 
     def turning_timeout(self):
-        
-        self.turn_control.omega = 0
-        self.turn_control.v = 0
-        self.control_pub.publish(self.turn_control)
         sleep_duration = randint(1,5)
         rospy.loginfo(f"Sleeping for {sleep_duration}")
         rospy.sleep(sleep_duration)
@@ -112,21 +108,30 @@ class TimeoutNode(DTROS):
 
     def transmit_resume(self):
         message = BoolStamped()
+        message.header.stamp = rospy.Time.now()
         message.data = True
-        for i in range(1,1000):
-            message.header.stamp = rospy.Time.now()
+        for i in range(10):
             self.unlock_publisher.publish(message)
         
+    def signal_stop(self):
+        self.turn_control.v = 0
+        rospy.loginfo("SIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOP")
+        self.turn_control.omega = 0
+        self.control_pub.publish(self.turn_control)
+
     def on_switch_on(self):
+        self.signal_stop()
         self.turning_timeout()
         # self.callback()
         self.turn_control.omega = 0
         self.turn_control.v = self.v_max # Parameter
-        for i in range(1,5):
-            self.control_pub.publish(self.turn_control)
-        sleep_duration = randint(2,3)
-        rospy.loginfo(f"Sleeping for {sleep_duration}")
+        self.control_pub.publish(self.turn_control)
+        # Will be set as a parameter later
+        sleep_duration = 2
         rospy.sleep(sleep_duration)
+        rospy.loginfo(f"Sleeping for {sleep_duration}")
+        self.signal_stop()
+        # rospy.Timer(rospy.Duration(sleep_duration),self.signal_stop,oneshot=True)
         self.transmit_resume()
 
 if __name__ == "__main__":

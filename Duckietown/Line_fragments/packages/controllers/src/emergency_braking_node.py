@@ -21,23 +21,23 @@ class EmergencyBraking(DTROS):
         super(EmergencyBraking, self).__init__(node_name=node_name, node_type=NodeType.CONTROL)
         
         # Setting up parameters
-        self.distance = DTParam('~distance', param_type=ParamType.FLOAT)
+        # self.distance = DTParam('~distance', param_type=ParamType.FLOAT)
 
-        # Subsriber data
-        self.subscriber = rospy.Subscriber('~in', Float32, self.callback, queue_size=1)
+        # # Subsriber data
+        # self.subscriber = rospy.Subscriber('~in', Float32, self.callback, queue_size=1)
 
-        # Construct publisher
-        self.control_pub = rospy.Publisher('~cmd', Twist2DStamped, queue_size=1)
+        # # Construct publisher
+        # self.control_pub = rospy.Publisher('~cmd', Twist2DStamped, queue_size=1)
 
     ###
 
-    def callback(self, msg) -> None:
-        try:
-            if msg.data<self.distance.value :
-                self.control_pub.publish(Twist2DStamped(omega=0.0, v=0.0))
+    # def callback(self, msg) -> None:
+    #     try:
+    #         if msg.data<self.distance.value :
+    #             self.control_pub.publish(Twist2DStamped(omega=0.0, v=0.0))
 
-        except Exception as ex:
-            rospy.logerr(ex)
+    #     except Exception as ex:
+    #         rospy.logerr(ex)
 
     ### 
 

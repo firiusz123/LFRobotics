@@ -158,8 +158,6 @@ class RedLineDetector(DTROS):
             self.pub_image.publish(self.debug_out_image)
             # Publish the result
             self.red_line_detected_pub.publish(bool_msg)
-            rospy.loginfo(f"Line detected: {lineDetected}")
-
         except cv_bridge.CvBridgeError as e:
             rospy.logerr(f"CvBridge Error: {e}")
 

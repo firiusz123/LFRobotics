@@ -217,7 +217,7 @@ class DashedLineDetector(DTROS):
             msg1.data = self.error['norm']
             # msg1.header.stamp = rospy.Time.now()
             self.error_pub.publish(msg1)
-
+            rospy.loginfo(msg1)
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))
 
