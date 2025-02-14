@@ -57,7 +57,7 @@ class PIDController:
         D = self.Kd*((error - self.prev_e)/delta_t)
         self.prev_e = error
         # PID controller for omega
-        omega = P + I        
+        omega = P + I + D       
         
         return omega, error, e_int
     
@@ -96,7 +96,7 @@ class WrapperController(DTROS):
 
         # Subscribe to error topic
         self.error_sub = rospy.Subscriber('~error', Float32, self.callback, queue_size=1)
-    
+
         # Message to publish
         self.twist = Twist2DStamped()
 
@@ -106,6 +106,7 @@ class WrapperController(DTROS):
     def callback(self, msg) -> None:
         rospy.loginfo(f"Running callback with error {msg.data}")
         try:
+            
             
             # Set controller paramters (can by changed during tune process)
             self.controler_param.force_update()
@@ -120,17 +121,13 @@ class WrapperController(DTROS):
 
 
             ######## changed it to the P controller for testing 
-            self.twist.omega = 6 * msg.data
+            # self.twist.omega = 6 * msg.data
             ########
             
             self.twist.v = self.v_max.value*0.6
 
-            #self.twist.omega = self.omega_max.value * self.twist.omega
+            self.twist.omega = self.omega_max.value * self.twist.omega
 
-            # C - Place your code here 
-            # Add header timestamp
-
-            
             # Publish control
             self.control_pub.publish(self.twist)
 

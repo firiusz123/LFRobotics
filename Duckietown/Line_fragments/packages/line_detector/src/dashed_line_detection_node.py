@@ -33,7 +33,7 @@ class DashedLineDetector(DTROS):
         self.points1 = []
         self.points2 = []
         self.polyFunction = None
-        self.zeroPoint = [300 , 380]
+        self.zeroPoint = [100, 380]
         self.max = 300
         self.min = -300
         # Read color mask  
@@ -245,16 +245,24 @@ class DashedLineDetector(DTROS):
                 # # Calculate error (raw and normalized)
                 # intersection_points = [(x, self.zeroPoint[1]) for x in x_smooth if np.isclose(y_smooth[np.isclose(x_smooth, x)], self.zeroPoint[1])]
 
+                # Calculate the absolute differences between y_smooth and self.zeroPoint[1]
+                distances = np.abs(y_smooth - self.zeroPoint[1])
+
+                # Find the index of the minimum distance
+                closest_index = np.argmin(distances)
+
+                # Select the intersection point corresponding to the closest index
+                closestLinePoint = (x_smooth[closest_index], self.zeroPoint[1])
+
                 # Calculate intersection points
-                indices = np.where(np.isclose(y_smooth, self.zeroPoint[1]))[0]
+                # indices = np.where(np.isclose(y_smooth, self.zeroPoint[1]))[0]
 
-                # Create intersection points using the indices
-                intersection_points = [(x_smooth[i], self.zeroPoint[1]) for i in indices]
+                # # Create intersection points using the indices
+                # intersection_points = [(x_smooth[i], self.zeroPoint[1]) for i in indices]
 
-                # Find the closest point using spline-fitted curve
-                # closestLinePoint = self.select_closest_point_y(self.points, self.zeroPoint[1])
-                closestLinePoint = self.select_closest_point_y(self.points, self.zeroPoint[1])
-                # extendedLinePoint = self.select_closest_point_reference(intersection_points, closestLinePoint)
+                # # closestLinePoint = self.select_closest_point_y(intersection_points, self.zeroPoint[1])
+                # closestLinePoint = intersection_points[0]
+                # # extendedLinePoint = self.select_closest_point_reference(intersection_points, closestLinePoint)
 
                 # Draw additional points
                 cv2.circle(image, (int(self.zeroPoint[0]), int(self.zeroPoint[1])), 10, (255, 0, 255), -1)

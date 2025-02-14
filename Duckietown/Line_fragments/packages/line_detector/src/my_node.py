@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Load the image (ensure the file is uploaded and path is correct)
-image_path = 'Line_fragments/packages/line_detector/src/ngur.png'  # Change this path to your image location
+image_path = '/home/student/Documents/LFRobotics/Duckietown/Line_fragments/packages/line_detector/src/ngur.png'  # Change this path to your image location
 image = cv2.imread(image_path)
 
 if image is None:
