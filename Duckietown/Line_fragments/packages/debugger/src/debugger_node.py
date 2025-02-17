@@ -178,19 +178,19 @@ class Debugger(DTROS):
             image = self.cvbridge.compressed_imgmsg_to_cv2(image)
             self.angleThreshold = 1
 
-            
+            if self.points:
             # DEBUG
-            x, y = [], []
-            x, y = self.points[::2], self.points[1::2]
-            x, y = list(x),list(y)
-            self.points = list(zip(self.points[::2], self.points[1::2]))
-            self.polyfit()
-            # if self.pub_debug_img.anybody_listening()
-            for i,center in enumerate(self.points):
-                if center:
-                    cv2.circle(image, (int(center[0]), int(center[1])), 10, ((i*20)%256,255,0), -1)
-            draw_x = np.linspace(min(x) , max(x) , int(max(x)-min(x)))
-            #draw_x = np.linspace(0 , 640, 640)
+                x, y = [], []
+                x, y = self.points[::2], self.points[1::2]
+                x, y = list(x),list(y)
+                self.points = list(zip(self.points[::2], self.points[1::2]))
+                self.polyfit()
+                # if self.pub_debug_img.anybody_listening()
+                for i,center in enumerate(self.points):
+                    if center:
+                        cv2.circle(image, (int(center[0]), int(center[1])), 10, ((i*20)%256,255,0), -1)
+                draw_x = np.linspace(min(x) , max(x) , int(max(x)-min(x)))
+                #draw_x = np.linspace(0 , 640, 640)
             if self.polyFunction:
                 
                 draw_y = self.polyFunction(draw_x)
