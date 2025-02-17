@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>debuger</name>
+  <name>datasync</name>
   <version>1.0.0</version>
-  <description>The debuger package</description>
+  <description>The datasync package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

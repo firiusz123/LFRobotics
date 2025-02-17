@@ -7,8 +7,7 @@
     </include>
 
     <!-- START Detection nodes -->
-    
-    <arg name="color_follow_line" default="yellow" />
+    <!-- <arg name="color_follow_line" default="yellow" />
     <arg name="color_stop_line" default="red" />
 
     <include file="$(find binmask)/launch/binmask_node.launch">
@@ -21,10 +20,7 @@
 
     <include file="$(find line_detector)/launch/red_line_detection_node.launch">
         <arg name="color_line" value="$(arg color_stop_line)"/>
-    </include>
-
-    <include file="$(find sensing)/launch/filter_node.launch" />
-
+    </include> -->
     <!-- END Detection nodes -->
 
     <!-- START Control nodes -->
