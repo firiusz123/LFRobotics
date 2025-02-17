@@ -16,9 +16,10 @@ from duckietown_msgs.msg import Twist2DStamped
 
 from random import randint, choice
 
-class TimeoutNode(DTROS):
+class TurningNode(DTROS):
+    
     def __init__(self, node_name):
-        super(TimeoutNode, self).__init__(node_name=node_name, node_type=NodeType.CONTROL)
+        super(TurningNode, self).__init__(node_name=node_name, node_type=NodeType.CONTROL)
     
         # Service that will wait a couple of seconds before moving the robot
         # self.timeout_service = rospy.Service(
@@ -43,6 +44,10 @@ class TimeoutNode(DTROS):
         self.steps = DTParam("~turn_parameters", param_type=ParamType.DICT).value['steps']
         # Gets possible robot directions and initializes a turn to a random one 
         # self.turn_options_proxy = rospy.ServiceProxy("~get_turn_options", Int32)
+
+        self.check_turn_routine_timer = rospy.Timer(rospy.Duration(0.1), self.check_turn_routine)
+
+        self.turn_routine = False
 
     def turning_timeout(self):
         sleep_duration = randint(1,5)
@@ -115,11 +120,13 @@ class TimeoutNode(DTROS):
         
     def signal_stop(self):
         self.turn_control.v = 0
-        rospy.loginfo("SIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOPSIGNAL STOP")
         self.turn_control.omega = 0
         self.control_pub.publish(self.turn_control)
 
     def on_switch_on(self):
+        self.turn_routine = True
+    
+    def turning_routine(self):
         self.signal_stop()
         self.turning_timeout()
         # self.callback()
@@ -134,6 +141,15 @@ class TimeoutNode(DTROS):
         # rospy.Timer(rospy.Duration(sleep_duration),self.signal_stop,oneshot=True)
         self.transmit_resume()
 
+
+    def on_switch_off(self):
+        self.turn_routine = False
+
+    def check_turn_routine(self, event):
+        # Periodically check if turn_routine should be executed
+        if self.turn_routine:
+            self.turning_routine()
+
 if __name__ == "__main__":
-    timeoutNode = TimeoutNode("turn_controller_node")
+    timeoutNode = TurningNode("turn_controller_node")
     rospy.spin()

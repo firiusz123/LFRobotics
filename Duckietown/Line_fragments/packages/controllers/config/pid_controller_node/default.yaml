@@ -1,5 +1,5 @@
-v_max     : 0.4
-omega_max : 8.0
+v_max     : 0.8 
+omega_max : 14.0
 
 delta_t   : 0.033333333
 

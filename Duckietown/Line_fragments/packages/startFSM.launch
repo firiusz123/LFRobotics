@@ -23,6 +23,8 @@
         <arg name="color_line" value="$(arg color_stop_line)"/>
     </include>
 
+    <include file="$(find sensing)/launch/filter_node.launch" />
+
     <!-- END Detection nodes -->
 
     <!-- START Control nodes -->
@@ -39,7 +41,8 @@
     <!-- Turning node -->
     <include file="$(find controllers)/launch/turn_controller_node.launch" />
     
-    
+    <include file="$(find controllers)/launch/distance_controller_node.launch" />
+
     <!-- END Control nodes -->
 
 

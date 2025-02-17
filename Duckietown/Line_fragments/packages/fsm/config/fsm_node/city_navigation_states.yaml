@@ -3,34 +3,29 @@
 
 initial_state: "LANE_FOLLOWING"
 
-
 events:
   red_line_detected:
     topic: "red_line_detection_node/red_line_detection" # Red line detection topic
     msg_type: "BoolStamped"
     trigger: True
-
-  emergency_braking_on:
-    topic: "drive_controller_node/emergency_braking"
-    msg_type: "BoolStamped"
-    trigger: True
-
-  line_follower_on:
-    topic: "drive_controller_node/line_follower"
-    msg_type: "BoolStamped"
-    trigger: True
-  
+ 
   resume_following: 
     topic: "red_line_detection_node/red_line_detection" # Red line detection topic
     msg_type: "BoolStamped"
     trigger: False
 
-    # topic: "turn_controller_node/start_driving"
-    # msg_type: "BoolStamped"
-    # trigger: True
+  emergency_braking_on:
+    topic: "distance_controller_node/emergency_braking"
+    msg_type: "BoolStamped"
+    trigger: True
 
+  line_follower_on:
+    topic: "distance_controller_node/line_follower"
+    msg_type: "BoolStamped"
+    trigger: True
+  
   adaptive_cruise_control_on:
-    topic: "drive_controller_node/adaptive_cruise_control"
+    topic: "distance_controller_node/adaptive_cruise_control"
     msg_type: "BoolStamped"
     trigger: True
 
@@ -43,7 +38,6 @@ nodes:
 
 global_transmissions:
   emergency_stop_on : "EMERGENCY_BRAKING"
-  # red_line_detected: "STOPPED"
 
 states:
   ADAPTIV_CRUISE_CONTROL:
@@ -63,7 +57,7 @@ states:
     
   LANE_FOLLOWING:
     transitions:
-      # adaptive_cruise_control_on : "ADAPTIV_CRUISE_CONTROL"
+      adaptive_cruise_control_on : "ADAPTIV_CRUISE_CONTROL"
       red_line_detected: "STOPPED"
     active_nodes:
       - pid_controller_node
