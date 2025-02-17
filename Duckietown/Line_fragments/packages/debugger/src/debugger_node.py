@@ -41,9 +41,9 @@ class Debugger(DTROS):
         self.image_param = DTParam('~image_param', param_type=ParamType.DICT)
         
         # Subscribe to image topic
-        self.sub_image = message_filters.Subscriber('/d3/binmask_node/image/mask/compressed', CompressedImage,queue_size=1)
-        self.sub_centroids = message_filters.Subscriber('/d3/centroid_node/image/centroids', Float32MultiArray, queue_size=1)
-        self.sub_polyerror = message_filters.Subscriber('/d3/polyfit_node/image/error' , Float32 , queue_size = 1)
+        self.sub_image = message_filters.Subscriber('~image/mask/compressed', CompressedImage,queue_size=1)
+        self.sub_centroids = message_filters.Subscriber('~image/centroids', Float32MultiArray, queue_size=1)
+        self.sub_polyerror = message_filters.Subscriber('~image/error' , Float32 , queue_size = 1)
         self.ts = message_filters.ApproximateTimeSynchronizer([self.sub_image, self.sub_centroids, self.sub_polyerror],queue_size=1, slop=0.5, allow_headerless=True)
         self.ts.registerCallback(self.callback)
         self.cvbridge = cv_bridge.CvBridge()
