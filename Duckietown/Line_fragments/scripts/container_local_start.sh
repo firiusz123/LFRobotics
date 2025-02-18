@@ -20,6 +20,9 @@ then
     docker run -it --rm \
         -v ${PWD}:/code/catkin_ws/src/Line_Fragmenter \
         -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
+   	-v /tmp/.X11-unix:/tmp/.X11-unix \
+   	-v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
+    	-e DISPLAY=unix$DISPLAY \
         --network host \
         --privileged \
         --runtime=nvidia \
