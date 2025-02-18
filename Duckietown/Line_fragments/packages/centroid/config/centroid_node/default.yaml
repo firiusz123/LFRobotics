@@ -8,7 +8,7 @@ image_param : {
 # and bottom is greater 
 search_area : {
   top     : 240,
-  bottom  : 500,
+  bottom  : 590,
   width_search : 400,
   n: 120
 }

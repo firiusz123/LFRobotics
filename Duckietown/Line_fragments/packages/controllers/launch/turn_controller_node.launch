@@ -16,6 +16,7 @@
             <!-- <remap from="~error" to="/$(arg veh)/polyfit_node/image/error" /> -->
             
             <!-- Publis to car command topic -->
+            <remap from="~turn_options" to="/$(arg veh)/turn_analyzer_node/options" />
             <remap from="~car_cmd" to="/$(arg veh)/car_cmd_switch_node/cmd" />
             <!-- <remap from="~pid_controller_node" to="/$(arg veh)/pid_controller_node" /> -->
             <!-- Load default values -->

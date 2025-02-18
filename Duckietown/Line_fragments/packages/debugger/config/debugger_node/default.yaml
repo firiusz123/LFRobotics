@@ -8,6 +8,11 @@ image_param : {
 # and bottom is greater 
 search_area : {
   top     : 240,
-  bottom  : 500,
-  n: 120
+  bottom  : 590,
+  n: 150
+}
+
+follow_point : {
+  pointX: 80,
+  pointY: 380
 }

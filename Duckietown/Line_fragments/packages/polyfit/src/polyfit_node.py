@@ -34,6 +34,8 @@ class DashedLineDetector(DTROS):
         # Normalization values for error
         self.normalizer_param = DTParam("~normalizer", param_type=ParamType.DICT)
         
+        self.angle_treshold = 10
+
         # Max degree of polynomial to be calculated
         self.poly_degree = DTParam('~degree', param_type=ParamType.DICT).value
         
@@ -85,7 +87,7 @@ class DashedLineDetector(DTROS):
                     return 0  
                 angle_rad = np.arccos(dot / (mag1 * mag2))
                 angle_deg = np.degrees(angle_rad)
-                if angle_deg <= 3:
+                if angle_deg <= self.angle_treshold:
                     threshold_triggered = 1
                 else:
                     threshold_triggered = 0
@@ -116,8 +118,8 @@ class DashedLineDetector(DTROS):
         # Start the thread to run polyfit
         polyfit_thread = threading.Thread(target=fit_poly)
         polyfit_thread.start()
-        # Wait for the thread to complete or timeout after 0.3 seconds
-        if not timeout_event.wait(timeout=0.05):
+        # Wait for the thread to complete or timeout after 0.01 seconds
+        if not timeout_event.wait(timeout=0.01):
             rospy.loginfo("Polyfit computation timed out, leaving polyFunction unchanged")
             # Optionally, you can also terminate the thread if needed
             # However, Python does not have a clean way to kill threads directly, so it is better to let them finish naturally

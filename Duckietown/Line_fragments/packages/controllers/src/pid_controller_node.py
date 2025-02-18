@@ -47,13 +47,13 @@ class PIDController:
 
         # integral of the error
         # anti-windup - preventing the integral error from growing too much
-        I = 0
-        # I = self.Ki*(self.prev_int + error *delta_t)
-        # self.prev_int = I
+        I = self.Ki*(self.prev_int + error * delta_t)
+        self.prev_int = I
+        self.prev_int = max(self.prev_int,1)
         e_int = max(min(I, 1), -1)
 
         # derivative of the error
-        D = self.Kd*((error - self.prev_e)/delta_t)
+        D = self.Kd*((error - self.prev_e) / delta_t)
         self.prev_e = error
         # PID controller for omega
         omega = P + I + D        
@@ -104,6 +104,18 @@ class WrapperController(DTROS):
     
         self.publisher_2 = rospy.Publisher('~pid_controller_node', Twist2DStamped, queue_size=1)
     
+
+
+    def P_callback(self,msg):
+        self.Kp = msg.data
+    
+    def I_callback(self,msg):
+        self.Ki = msg.data
+
+    def D_callback(self,msg):
+        self.Kd = msg.data 
+
+
     def callback(self, msg) -> None:
         # rospy.loginfo(f"Running callback with error {msg.data}")
         try:
@@ -121,10 +133,11 @@ class WrapperController(DTROS):
 
 
             ######## changed it to the P controller for testing 
-            self.twist.omega = self.omega_max.value * msg.data
+            self.twist.omega = self.omega_max.value * pd_value * (-1)
             ########
+            rospy.loginfo(pd_value)
             
-            self.twist.v = self.v_max.value*0.6
+            self.twist.v = self.v_max.value
 
             # self.twist.omega = self.omega_max.value * pd_value
 
@@ -149,6 +162,7 @@ class WrapperController(DTROS):
         self.twist.header.stamp = rospy.Time.now()
         self.twist.omega = 0
         self.twist.v = 0
+        rospy.Rate(100)
         self.control_pub.publish(self.twist)
         rospy.sleep(1)
         rospy.loginfo("Stop PIDController")

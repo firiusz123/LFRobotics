@@ -3,3 +3,8 @@ turn_parameters: {
   omega_max: 8,
   steps: 10
 }
+
+search_area : {
+  top     : 360,
+  bottom  : 400
+}

@@ -22,6 +22,7 @@
 
     <include file="$(find debugger)/launch/debugger_node.launch"/>
     
+    <include file="$(find intersection_analyzer)/launch/turn_analyzer_node.launch" />
     <!-- END Detection nodes -->
 
 </launch>

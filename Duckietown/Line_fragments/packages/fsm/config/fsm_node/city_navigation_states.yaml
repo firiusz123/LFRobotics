@@ -10,9 +10,9 @@ events:
     trigger: True
  
   resume_following: 
-    topic: "red_line_detection_node/red_line_detection" # Red line detection topic
+    topic: "turn_controller_node/start_driving" # Red line detection topic
     msg_type: "BoolStamped"
-    trigger: False
+    trigger: True
 
   emergency_braking_on:
     topic: "distance_controller_node/emergency_braking"

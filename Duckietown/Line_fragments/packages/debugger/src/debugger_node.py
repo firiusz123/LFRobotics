@@ -7,6 +7,7 @@ import cv_bridge
 import threading
 import numpy as np
 from math import sqrt
+import matplotlib.pyplot as plt  
 
 # import DTROS-related classes
 from duckietown.dtros import \
@@ -30,15 +31,17 @@ class Debugger(DTROS):
         self.centers = []
         self.points = []
         self.polyFunction = None
-        self.zeroPoint = [50 , 380]
-        self.max = 300
-        self.min = -300
+        self.point_param = DTParam("~follow_point", param_type=ParamType.DICT)
+        self.zeroPoint = [self.point_param.value["pointX"],self.point_param.value["pointY"]]
         # Read color mask  
         rospy.loginfo("debugger started here it comes")
         
+        # self.figure, self.ax = plt.subplot()
 
         # Camera parameters
         self.image_param = DTParam('~image_param', param_type=ParamType.DICT)
+        self.max = self.image_param.value["width"]-self.zeroPoint[0]
+        self.min = -self.zeroPoint[0]
         
         # Subscribe to image topic
         self.sub_image = message_filters.Subscriber('~image/mask/compressed', CompressedImage,queue_size=1)
@@ -47,11 +50,6 @@ class Debugger(DTROS):
         self.ts = message_filters.ApproximateTimeSynchronizer([self.sub_image, self.sub_centroids, self.sub_polyerror],queue_size=1, slop=0.5, allow_headerless=True)
         self.ts.registerCallback(self.callback)
         self.cvbridge = cv_bridge.CvBridge()
-
-
-
-
-
 
         # Transformed image
         self.debug_img_pub = rospy.Publisher('~image/debugger_out/out/compressed', CompressedImage, queue_size=1)
@@ -111,8 +109,8 @@ class Debugger(DTROS):
         polyfit_thread = threading.Thread(target=fit_poly)
         polyfit_thread.start()
 
-        # Wait for the thread to complete or timeout after 0.3 seconds
-        if not timeout_event.wait(timeout=0.05):
+        # Wait for the thread to complete or timeout after 0.01 seconds
+        if not timeout_event.wait(timeout=0.01):
             rospy.loginfo("Polyfit computation timed out, leaving polyFunction unchanged")
             # Optionally, you can also terminate the thread if needed
             # However, Python does not have a clean way to kill threads directly, so it is better to let them finish naturally
@@ -192,11 +190,12 @@ class Debugger(DTROS):
                         cv2.circle(image, (int(center[0]), int(center[1])), 10, ((i*20)%256,255,0), -1)
                 draw_x = np.linspace(min(x) , max(x) , int(max(x)-min(x)))
                 #draw_x = np.linspace(0 , 640, 640)
-            if self.polyFunction:
-                
+            
+            if self.polyFunction and self.points:
                 draw_y = self.polyFunction(draw_x)
-            
-            
+                
+                draw_points = (np.asarray([draw_x, draw_y]).T).astype(np.int32) 
+                # line, = self.ax.plot(draw_x,draw_y)
                 # Calculate intersection points
                 intersectionXValues = (self.polyFunction - self.zeroPoint[1]).roots.real
                 intersectionPoints = [ (x,self.zeroPoint[1]) for x in intersectionXValues ]
@@ -214,8 +213,7 @@ class Debugger(DTROS):
                 cv2.circle(image, (int(closestLinePoint[0]), int(closestLinePoint[1])), 15, (255,0,0), -1)
           
             
-            
-                draw_points = (np.asarray([draw_x, draw_y]).T).astype(np.int32) 
+
             #cv2.circle(image, (int(self.xpoint), int(self.polyFunction(self.xpoint))), 10, (255,0,0), -1)
                 cv2.polylines(image, [draw_points], False,color=(255,0,0) , thickness= 2) 
             # Add error value to image
@@ -240,6 +238,5 @@ if __name__ == '__main__':
     import warnings
     warnings.filterwarnings("ignore")
     # ===================== TO BE REMOVED =====================
-
     some_name_node = Debugger(node_name='debugger_node')
     rospy.spin()

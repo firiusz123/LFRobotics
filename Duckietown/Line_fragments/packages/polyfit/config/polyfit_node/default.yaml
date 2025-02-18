@@ -1,12 +1,12 @@
 
 follow_point : {
-  pointX: 100,
+  pointX: 80,
   pointY: 380
 }
 
 normalizer : {
-  maxValue: 300,
-  minValue: -300
+  maxValue: 200,
+  minValue: -200
 }
 
 degree: 3

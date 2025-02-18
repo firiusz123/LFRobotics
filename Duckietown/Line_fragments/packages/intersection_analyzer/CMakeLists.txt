@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(debugger)
+project(intersection_analyzer)
 
 find_package(catkin REQUIRED COMPONENTS
   rospy
