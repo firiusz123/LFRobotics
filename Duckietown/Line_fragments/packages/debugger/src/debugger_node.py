@@ -34,7 +34,7 @@ class Debugger(DTROS):
         self.max = 300
         self.min = -300
         # Read color mask  
-        rospy.loginfo("debugger FUCKING started here it comes")
+        rospy.loginfo("debugger started here it comes")
         
 
         # Camera parameters
@@ -169,6 +169,7 @@ class Debugger(DTROS):
             chunks.append(image[top+i*dh:top+(i+1)*dh,0:self.image_param.value['width']])
         return chunks
     
+    
 
     
     def callback(self, image , centroids , error) -> None:
@@ -228,7 +229,7 @@ class Debugger(DTROS):
             
             # Publish transformed image
             self.debug_img_pub.publish(debug_out_image)
-            rospy.loginfo("huj")
+            #rospy.loginfo("debbuger callback triggered")
 
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))

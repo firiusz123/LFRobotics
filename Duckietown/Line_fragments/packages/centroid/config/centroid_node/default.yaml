@@ -9,5 +9,13 @@ image_param : {
 search_area : {
   top     : 240,
   bottom  : 500,
+  width_search : 400,
   n: 120
+}
+centroid_search_method : {
+  # method = 0 finding contours by cv2
+  # method = 1 finding contours by slicing 
+  method : 0 ,
+  #threshold of moment of each contour 
+  threshold : 10
 }

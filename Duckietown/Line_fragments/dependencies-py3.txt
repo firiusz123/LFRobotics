@@ -2,10 +2,7 @@
 # mlocate
 opencv-python
 numpy==1.21
+pyqt5
 # tensorflow
 torch
 control
-
-
-
-
