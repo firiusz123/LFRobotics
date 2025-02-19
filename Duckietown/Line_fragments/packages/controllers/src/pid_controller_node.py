@@ -164,7 +164,7 @@ class WrapperController(DTROS):
         self.twist.v = 0
         rospy.Rate(100)
         self.control_pub.publish(self.twist)
-        rospy.sleep(1)
+        rospy.sleep(2)
         rospy.loginfo("Stop PIDController")
 
 

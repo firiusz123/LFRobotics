@@ -56,7 +56,9 @@ class TurnAnalyzer(DTROS):
         
         self.cvbridge = cv_bridge.CvBridge()
         
-
+        self.hue = None
+        self.saturation = None
+        self.value = None
 
     def forward_threshold(self, image):
         forward_search_area = self.search_area.value['forward_search_area']
@@ -90,10 +92,10 @@ class TurnAnalyzer(DTROS):
         image_hsv = cv2.cvtColor(cropped_img, cv2.COLOR_RGB2HSV)
 
         lower_mask = cv2.inRange(image_hsv, self.color_line_mask['lower1'], self.color_line_mask['upper1'])
-        upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
+        # upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
 
         # Combine the masks
-        full_mask = cv2.bitwise_or(lower_mask, upper_mask)
+        full_mask = cv2.bitwise_or(lower_mask, lower_mask)
 
         # Apply mask to image
         result_image = cv2.bitwise_and(cropped_img, cropped_img, mask=full_mask)
@@ -108,8 +110,7 @@ class TurnAnalyzer(DTROS):
             return 0
 
     def callback(self,msg):
-        try:           
-            
+        try:
             # Camera parameters
             self.image_param = DTParam('~image_param', param_type=ParamType.DICT)
 
@@ -126,12 +127,14 @@ class TurnAnalyzer(DTROS):
             image = cv2.blur(image,(5,5))
             # Convert image to HSV color space
             image_hsv = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
-
-            lower_mask = cv2.inRange(image_hsv,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
-            upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
-
+            
+            if self.hue is None:
+                lower_mask = cv2.inRange(image_hsv,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
+                # upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
+            else:
+                lower_mask = cv2.inRange()
             # Combine the masks
-            full_mask = cv2.bitwise_or(lower_mask, upper_mask)
+            full_mask = cv2.bitwise_or(lower_mask, lower_mask)
 
             result_image = cv2.bitwise_and(image,image, mask=full_mask)
 
@@ -152,6 +155,10 @@ class TurnAnalyzer(DTROS):
 
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))
+
+    # def update_hue(self):
+    #     self.
+    # def p
 
         
 if __name__ == '__main__':
