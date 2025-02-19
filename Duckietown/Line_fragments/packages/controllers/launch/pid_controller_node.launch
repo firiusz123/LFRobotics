@@ -14,6 +14,8 @@
             <!-- <remap from="~error" to="/$(arg veh)/dashed_line_detection_node/error/norm/lateral" /> -->
             <remap from="~error" to="/$(arg veh)/polyfit_node/image/error" />
             
+            <remap from="~v" to="/$(arg veh)/acc_controller_node/v" />
+
             <!-- Publis to car command topic -->
             <remap from="~car_cmd" to="/$(arg veh)/car_cmd_switch_node/cmd" />
             <!-- <remap from="~pid_controller_node" to="/$(arg veh)/pid_controller_node" /> -->

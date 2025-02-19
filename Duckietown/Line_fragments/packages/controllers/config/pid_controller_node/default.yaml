@@ -5,7 +5,7 @@ delta_t   : 0.033333333
 
 # PID parameters
 pid_param : {
-  Kp        : 1,
-  Ki        : 0,
-  Kd        : 0,
+  Kp        : 1.8,
+  Ki        : 0.4,
+  Kd        : 0.01,
 }

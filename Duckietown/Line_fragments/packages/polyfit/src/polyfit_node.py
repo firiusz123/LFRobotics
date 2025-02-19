@@ -184,6 +184,10 @@ class DashedLineDetector(DTROS):
             self.points = list(zip(merged_points[::2], merged_points[1::2]))
             self.polyfit()
             if self.polyFunction == None or len(self.points) == 0 or self.points == None:
+                msg1 = Float32()
+                msg1.data = self.error['norm']
+                # msg1.header.stamp = rospy.Time.now()
+                self.error_pub.publish(msg1)
                 return
             # if self.pub_debug_img.anybody_listening():
             # Calculate intersection points
@@ -203,23 +207,24 @@ class DashedLineDetector(DTROS):
             #     candidateError = min(candidateError,(self.zeroPoint[0] - max(intersectionXValues))).real
             candidateError = self.zeroPoint[0] - extendedLinePoint[0]
             self.error['raw'] = candidateError
-            if self.error['raw'] > self.max:
-                self.max = self.error['raw']
-            if self.error['raw'] < self.min:
-                self.min = self.error['raw']
+            # Due to problems with PID, the values of min and max will be fixed
+            # if self.error['raw'] > self.max:
+            #     self.max = self.error['raw']
+            # if self.error['raw'] < self.min:
+            #     self.min = self.error['raw']
             if self.max != self.min:
                 norm = 2 * (self.error['raw'] - self.min) / (self.max - self.min) - 1
             else:
                 norm = 0  # Or any default normalized value
             self.error['norm'] = norm.real
-            
+            # rospy.loginfo(f"Max value: {self.max} Min value: {self.min} Value of candidate error: {candidateError}")
             # Publish transformed image
             # rospy.loginfo(f"Publishing {self.error['norm']}")
             msg1 = Float32()
             msg1.data = self.error['norm']
             # msg1.header.stamp = rospy.Time.now()
             self.error_pub.publish(msg1)
-            rospy.loginfo(msg1)
+            # rospy.loginfo(msg1)
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))
 

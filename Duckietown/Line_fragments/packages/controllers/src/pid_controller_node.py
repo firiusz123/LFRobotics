@@ -11,7 +11,7 @@ from duckietown.dtros import \
 
 # import messages and services
 from std_msgs.msg import Float32
-from duckietown_msgs.msg import Twist2DStamped
+from duckietown_msgs.msg import Twist2DStamped, FSMState
 
 class PIDController:
 
@@ -21,9 +21,8 @@ class PIDController:
         self.Kd = None
         self.prev_e = 0.0
         self.prev_int = 0.0
-        # #apparently in the code when the PIDcontroll starts there is a callback with error but we cannot pass it to the run function 
-        
-    
+        # #apparently in the code when the PIDcontroll starts there is a callback with error but we cannot pass it to the run function         
+
     # def run(self, error, v_0, theta_ref, theta_hat, prev_e, prev_int, delta_t):
     def run(self, theta_ref, theta_hat, delta_t):
         """
@@ -40,16 +39,18 @@ class PIDController:
             e (:double:) current tracking error (automatically becomes prev_e_y at next iteration).
             e_int (:double:) current integral error (automatically becomes prev_int_y at next iteration).
         """
-        # A - Place your code here     
         # Tracking error
         error = -(theta_ref-theta_hat)
         P = self.Kp * error
 
-        # integral of the error
+        # Integral of the error can unexpectedy jump due to polynomial detection
+        # Error can 
+        if abs(error) < 5:
+            I = self.Ki*(self.prev_int + error * delta_t)
+            self.prev_int = I
+        max_int_value = 2
         # anti-windup - preventing the integral error from growing too much
-        I = self.Ki*(self.prev_int + error * delta_t)
-        self.prev_int = I
-        self.prev_int = max(self.prev_int,1)
+        self.prev_int = min(max(self.prev_int,-max_int_value),max_int_value)
         e_int = max(min(I, 1), -1)
 
         # derivative of the error
@@ -65,6 +66,9 @@ class PIDController:
         self.Ki = params['Ki']
         self.Kd = params['Kd']
     
+
+
+
 ###################################################################################
 
 class WrapperController(DTROS):
@@ -81,14 +85,19 @@ class WrapperController(DTROS):
         self.omega_max = DTParam('~omega_max', param_type=ParamType.FLOAT)
         
         # Set maximum linear speed
-        self.v_max = DTParam('~v_max', param_type=ParamType.FLOAT)
-
+        self.v_max_param = DTParam('~v_max', param_type=ParamType.FLOAT)
+        self.v_max = self.v_max_param.value
         # Set maximum linear speed
         self.delta_t = DTParam('~delta_t', param_type=ParamType.FLOAT)
 
         # Controller variables
         self.prev_e = 0.0
         self.prev_int = 0.0
+
+        self.sub_fsm_mode = rospy.Subscriber("fsm_node/mode",FSMState, self.cbFSMMode, queue_size=1) 
+
+        self.v_sub = rospy.Subscriber('~v', Float32, self.v_callback, queue_size=1)
+
 
         # Create controller
         self.controller = PIDController()
@@ -125,20 +134,13 @@ class WrapperController(DTROS):
             self.controller.set_param(self.controler_param.value)
 
             # Compute controll
-            # B - Place your code here 
-           
-            
             pd_value,error,e_int = self.controller.run(0.0, msg.data, self.delta_t.value)
-            # Scalling output form controller
-
-
-            ######## changed it to the P controller for testing 
-            self.twist.omega = self.omega_max.value * pd_value * (-1)
-            ########
-            rospy.loginfo(pd_value)
             
-            self.twist.v = self.v_max.value
-
+            # Scalling output form controller
+            self.twist.omega = self.omega_max.value * pd_value
+            
+            rospy.loginfo(pd_value)
+            self.twist.v = self.v_max
             # self.twist.omega = self.omega_max.value * pd_value
 
             
@@ -146,7 +148,7 @@ class WrapperController(DTROS):
             # rospy.loginfo(f"PID Publishing {self.twist.omega} {self.twist.v}")
             self.control_pub.publish(self.twist)
             self.publisher_2.publish(self.twist)
-            # rospy.loginfo(f"Should publish {self.twist.omega} {self.twist.v}")
+            rospy.loginfo(f"Should publish {self.twist.omega} {self.twist.v}")
 
         except Exception as e:
             rospy.logerr("Error: {0}".format(e))
@@ -166,7 +168,14 @@ class WrapperController(DTROS):
         self.control_pub.publish(self.twist)
         rospy.sleep(2)
         rospy.loginfo("Stop PIDController")
+    
+    def cbFSMMode(self,  msg) -> None:
+        if msg.state=='LANE_FOLLOWING':
+            self.v_max = self.v_max_param.value
 
+    def v_callback(self, msg) -> None:
+        rospy.loginfo(f"Changing cruise value to {msg.data}")
+        self.v_max = msg.data
 
 ###################################################################################
 

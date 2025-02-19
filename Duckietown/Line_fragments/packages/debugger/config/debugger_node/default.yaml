@@ -13,6 +13,6 @@ search_area : {
 }
 
 follow_point : {
-  pointX: 80,
+  pointX: 60,
   pointY: 380
 }

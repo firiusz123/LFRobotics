@@ -63,7 +63,7 @@ class DriveController(DTROS):
             # Publish events
             self.msg.header.stamp= rospy.Time.now()
             for key in self.pubs:
-                rospy.loginfo(f"{key} \t\t {self.topics[key]}")
+                # rospy.loginfo(f"{key} \t\t {self.topics[key]}")
                 self.msg.data = self.topics[key]
                 self.pubs[key].publish(self.msg)
 

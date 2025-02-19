@@ -30,12 +30,6 @@ class TurnAnalyzer(DTROS):
             node_type=NodeType.PERCEPTION
         )
 
-        self.camera_subscriber = None 
-
-        self.turn_publisher = None
-
-        self.turn_service = None
-
         self.pub_debug_img = rospy.Publisher('~image/out/compressed', CompressedImage, queue_size=1)
         
         self.pub_turn_options = rospy.Publisher('~options', Int32, queue_size=1)
@@ -63,48 +57,39 @@ class TurnAnalyzer(DTROS):
     def forward_threshold(self, image):
         forward_search_area = self.search_area.value['forward_search_area']
         cropped_img = image[forward_search_area['top']:forward_search_area['bottom'], :]
-        return self.apply_threshold(cropped_img)
+        rospy.loginfo("Applying forward treshold:")
+        return self.apply_threshold(cropped_img,forward_search_area['threshold'])
 
     def left_threshold(self, image):
         # Set left search area (1/3 of image width)
-        left_search_area = {
-            'top': 0,
-            'bottom': self.image_param.value['height'],
-            'left': 0,
-            'right': self.image_param.value['width'] // 3
-        }
+        left_search_area = self.search_area.value['left_search_area']
         cropped_img = image[left_search_area['top']:left_search_area['bottom'], left_search_area['left']:left_search_area['right']]
-        return self.apply_threshold(cropped_img)
+        rospy.loginfo("Applying left treshold:")
+        return self.apply_threshold(cropped_img,left_search_area['threshold'])
 
     def right_threshold(self, image):
         # Set right search area (last 1/3 of image width)
-        right_search_area = {
-            'top': 0,
-            'bottom': self.image_param.value['height'],
-            'left': 2 * self.image_param.value['width'] // 3,
-            'right': self.image_param.value['width']
-        }
+        right_search_area = self.search_area.value['right_search_area']
         cropped_img = image[right_search_area['top']:right_search_area['bottom'], right_search_area['left']:right_search_area['right']]
-        return self.apply_threshold(cropped_img)
+        rospy.loginfo("Applying right treshold:")
+        return self.apply_threshold(cropped_img,right_search_area['threshold'])
 
-    def apply_threshold(self, cropped_img):
+    def apply_threshold(self, cropped_img, threshold):
         # Convert image to HSV color space
         image_hsv = cv2.cvtColor(cropped_img, cv2.COLOR_RGB2HSV)
 
         lower_mask = cv2.inRange(image_hsv, self.color_line_mask['lower1'], self.color_line_mask['upper1'])
-        # upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
+        upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
 
         # Combine the masks
-        full_mask = cv2.bitwise_or(lower_mask, lower_mask)
+        full_mask = cv2.bitwise_or(lower_mask, upper_mask)
 
         # Apply mask to image
         result_image = cv2.bitwise_and(cropped_img, cropped_img, mask=full_mask)
         
-        # Check if threshold is met (based on non-zero pixels in the mask)
-        threshold_value = 100  # Set your desired threshold here
-        non_zero_pixels = np.count_nonzero(full_mask)
-
-        if non_zero_pixels > threshold_value:
+        non_zero_pixels = np.count_nonzero(result_image)
+        rospy.loginfo(f"{non_zero_pixels} {threshold}")
+        if non_zero_pixels > threshold:
             return 1
         else:
             return 0
@@ -128,18 +113,37 @@ class TurnAnalyzer(DTROS):
             # Convert image to HSV color space
             image_hsv = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
             
-            if self.hue is None:
-                lower_mask = cv2.inRange(image_hsv,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
-                # upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
-            else:
-                lower_mask = cv2.inRange()
+            lower_mask = cv2.inRange(image_hsv,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
+            upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
+            # else:
+            #     lower_mask = cv2.inRange()
             # Combine the masks
-            full_mask = cv2.bitwise_or(lower_mask, lower_mask)
+            full_mask = cv2.bitwise_or(lower_mask, upper_mask)
 
             result_image = cv2.bitwise_and(image,image, mask=full_mask)
 
+            forward_search_area = self.search_area.value['forward_search_area']
+            left_search_area = self.search_area.value['left_search_area']
+            right_search_area = self.search_area.value['right_search_area']
+            
+            # Draw forward search area boundaries
+            cv2.line(result_image, (0, forward_search_area['top']), (self.image_param.value['width'], forward_search_area['top']), (0, 255, 0), 2)  # Green
+            cv2.line(result_image, (0, forward_search_area['bottom']), (self.image_param.value['width'], forward_search_area['bottom']), (0, 255, 0), 2)  # Green
+
+            # Draw left search area boundaries
+            cv2.line(result_image, (left_search_area['right'], left_search_area['top']), (left_search_area['right'], left_search_area['bottom']), (255, 0, 0), 2)  # Blue
+
+            # Draw right search area boundaries
+            cv2.line(result_image, (right_search_area['left'], right_search_area['top']), (right_search_area['left'], right_search_area['bottom']), (255, 0, 0), 2)  # Blue
+            
             debug_out_image = self.cvbridge.cv2_to_compressed_imgmsg(np.concatenate(([result_image]),axis=1).reshape(
             (self.image_param.value['height'], self.image_param.value['width'], 3)), 'jpg')
+            # left_search_area = {
+            #     'top': 0,
+            #     'bottom': self.image_param.value['height'],
+            #     'left': 0,
+            #     'right': self.image_param.value['width'] // 3
+            # }
 
             debug_out_image.header.stamp = rospy.Time.now()
             self.pub_debug_img.publish(debug_out_image)
@@ -156,9 +160,7 @@ class TurnAnalyzer(DTROS):
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))
 
-    # def update_hue(self):
-    #     self.
-    # def p
+
 
         
 if __name__ == '__main__':

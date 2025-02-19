@@ -7,7 +7,8 @@
     </include>
 
     <!-- START Detection nodes -->
-    <!-- <arg name="color_follow_line" default="yellow" />
+    
+    <arg name="color_follow_line" default="yellow" />
     <arg name="color_stop_line" default="red" />
 
     <include file="$(find binmask)/launch/binmask_node.launch">
@@ -20,8 +21,14 @@
 
     <include file="$(find line_detector)/launch/red_line_detection_node.launch">
         <arg name="color_line" value="$(arg color_stop_line)"/>
-    </include> -->
+    </include>
+
+    <include file="$(find debugger)/launch/debugger_node.launch"/>
+    
+    <include file="$(find intersection_analyzer)/launch/turn_analyzer_node.launch" />
+
     <!-- END Detection nodes -->
+
 
     <!-- START Control nodes -->
 
@@ -36,7 +43,9 @@
 
     <!-- Turning node -->
     <include file="$(find controllers)/launch/turn_controller_node.launch" />
-    
+
+    <include file="$(find sensing)/launch/filter_node.launch" />
+
     <include file="$(find controllers)/launch/distance_controller_node.launch" />
 
     <!-- END Control nodes -->

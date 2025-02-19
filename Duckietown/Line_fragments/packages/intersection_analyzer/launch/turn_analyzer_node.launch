@@ -13,7 +13,7 @@
             
             <!-- Load default values -->
             <rosparam command="load" file="$(find intersection_analyzer)/config/$(arg node_name)/default.yaml" />
-            <rosparam command="load" file="$(find intersection_analyzer)/config/$(arg node_name)/color/gray.yaml" />
+            <rosparam command="load" file="$(find intersection_analyzer)/config/$(arg node_name)/color/red.yaml" />
 
         </node>
     </group>

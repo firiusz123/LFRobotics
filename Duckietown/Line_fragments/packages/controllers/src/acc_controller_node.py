@@ -45,7 +45,7 @@ class ACCControler(DTROS):
                 self.v_acc.data=self.v.value['max']
 
             self.v_pub.publish(self.v_acc)
-            rospy.loginfo(self.v_acc.data)
+            # rospy.loginfo(self.v_acc.data)
 
         except Exception as ex:
             rospy.logerr(ex)

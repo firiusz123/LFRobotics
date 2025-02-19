@@ -9,19 +9,22 @@ image_param : {
 
 search_area : {
   forward_search_area : {
-    top     : 240,
-    bottom  : 500
+    top     : 180,
+    bottom  : 240,
+    threshold: 400
   },
     left_search_area: {
-    top: 0,
-    bottom: 480,
+    top: 200,
+    bottom: 350,
     left: 0,
-    right: 213
+    right: 100,
+    threshold: 1500
     },
   right_search_area: {
-    top: 0,
-    bottom: 480,
-    left: 427,
-    right: 640
+    top: 180,
+    bottom: 310,
+    left: 300,
+    right: 560,
+    threshold: 1800
   }
 }

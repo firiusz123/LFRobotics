@@ -51,7 +51,7 @@ class TurningNode(DTROS):
         # Gets possible robot directions and initializes a turn to a random one 
         # self.turn_options_proxy = rospy.ServiceProxy("~get_turn_options", Int32)
 
-        self.check_turn_routine_timer = rospy.Timer(rospy.Duration(0.1), self.check_turn_routine)
+        self.check_turn_routine_timer = rospy.Timer(rospy.Duration(0.01), self.check_turn_routine)
 
         self.turn_routine = False
 
@@ -66,7 +66,10 @@ class TurningNode(DTROS):
         fixed_sleep_duration = self.sleep_duration / self.steps
         d_omega = omega_turn / self.steps
         self.turn_control.v = self.v_max / 2
-        for i in range(1,self.steps): # Turn steps
+        turn_steps = self.steps / 1.5
+        turn_steps = int(turn_steps)
+        for i in range(1,turn_steps): # Turn steps
+         # Turn steps
             self.turn_control.omega += d_omega * i
             self.control_pub.publish(self.turn_control)
             rospy.sleep(fixed_sleep_duration)
@@ -78,12 +81,13 @@ class TurningNode(DTROS):
         d_omega = omega_turn / self.steps
         fixed_sleep_duration = self.sleep_duration / self.steps
         self.turn_control.v = self.v_max / 4
-        for i in range(1,self.steps): # Turn steps
+        turn_steps = self.steps / 1.5
+        turn_steps = int(turn_steps)
+        for i in range(1,turn_steps): # Turn steps
             self.turn_control.omega -= d_omega * i
             self.control_pub.publish(self.turn_control)
             rospy.sleep(fixed_sleep_duration)
             rospy.loginfo(f"Sleeping for {fixed_sleep_duration}")
-
 
     def go_forward(self):
         rospy.loginfo("Going forward")
@@ -113,6 +117,7 @@ class TurningNode(DTROS):
             else:
                 rospy.logerr("Unknown turn direction")
         except Exception as e:
+            self.transmit_resume()
             rospy.loginfo(f"An error has occured in the tunr node:\n {e}")
         rospy.loginfo("Returning to following")
         self.signal_stop()
@@ -144,6 +149,9 @@ class TurningNode(DTROS):
                 options.append(i)
             i += 1
             turn_number //= 2
+        if len(options) == 0 or options is None:
+            self.transmit_resume()
+            return 
         self.turn(choice(options))
 
     def transmit_resume(self):
@@ -156,19 +164,20 @@ class TurningNode(DTROS):
     def signal_stop(self):
         self.turn_control.v = 0
         self.turn_control.omega = 0
-        rospy.loginfo("STOPINGSTOPINGSTOPING")
-        rospy.Rate(100)
+        # rospy.loginfo("STOPINGSTOPINGSTOPING")
+        rospy.Rate(10)
         self.control_pub.publish(self.turn_control)
 
-    def on_switch_on(self):
-        rospy.loginfo("Starting up turning node")
-        self.turn_routine = True
     
     def turning_routine(self):
         self.signal_stop()
         self.turning_timeout()
         self.turn_decision()
+        self.transmit_resume()
 
+    def on_switch_on(self):
+        rospy.loginfo("Starting up turning node")
+        self.turn_routine = True
 
     def on_switch_off(self):
         rospy.loginfo("Shutting down turning node")
