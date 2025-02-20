@@ -37,13 +37,22 @@ class DashedLineDetector(DTROS):
         self.angle_treshold = 10
 
         # Max degree of polynomial to be calculated
-        self.poly_degree = DTParam('~degree', param_type=ParamType.DICT).value
+        self.poly_degree = DTParam('~degree', param_type=ParamType.INT).value
         
         self.centers = []
         self.points = []
-        self.error_buffer = [None for i in range(0,4)]
+        self.error_buffer_size = DTParam('~buffer_size', param_type=ParamType.INT).value
+        self.error_buffer = [None] * self.error_buffer_size
         self.mean_error = 0
+        
+        self.error = {'raw' : None, 'norm' : None}
 
+        # Subscriber to centroids topic that contains centroid points
+        self.sub_image = rospy.Subscriber('~image/centroids', Float32MultiArray, self.callback, queue_size=1)
+        
+        # Publishers
+        self.error_pub = rospy.Publisher('~image/error' , Float32 , queue_size = 1)
+        
         # Poly function and desired horizontal line that should return desired point on polynomial
         self.polyFunction = None
         self.zeroPoint = [ self.point_param.value["pointX"],self.point_param.value["pointY"] ]
@@ -158,10 +167,6 @@ class DashedLineDetector(DTROS):
                     result = point
         return result
 
-
-
-    
-    
     
     def callback(self, msg) -> None:
         try:       
@@ -214,22 +219,30 @@ class DashedLineDetector(DTROS):
             # rospy.loginfo(f"Max value: {self.max} Min value: {self.min} Value of candidate error: {candidateError}")
             # Publish transformed image
             # rospy.loginfo(f"Publishing {self.error['norm']}")
+            if abs(self.error['norm']) > 1:
+                self.error['norm'] = self.mean_error
             if self.error['norm']:
                 self.error_buffer.pop(0)
                 self.error_buffer.append(self.error['norm'])
             
             notNone_values = 0
-            for i in range(4):
-                if self.error_buffer[i] != None:
-                    notNone_values+=1
-                    self.mean_error+=self.error_buffer[i]
-            self.mean_error = self.mean_error/notNone_values
+            self.mean_error = 0
+            self.median_error = None
+            if None in self.error_buffer: 
+                for i in range(self.error_buffer_size):
+                    if self.error_buffer[i] != None:
+                        notNone_values+=1
+                        self.mean_error+=self.error_buffer[i]
+                self.mean_error = self.mean_error/notNone_values
+            else:
+                self.error_buffer.sort()
+                self.median_error = self.error_buffer[self.error_buffer_size//2]
             
-
+            rospy.loginfo(f"Normalized:\t{self.error['norm']} Median:\t{self.median_error} Mean:\t{self.mean_error}")
 
             msg1 = Float32()
-            msg1.data = self.mean_error
-            
+            msg1.data = self.median_error if self.median_error else self.mean_error
+            # rospy.loginfo(f"Publishit {self.mean_error}")
             # msg1.header.stamp = rospy.Time.now()
             self.error_pub.publish(msg1)
             # rospy.loginfo(msg1)

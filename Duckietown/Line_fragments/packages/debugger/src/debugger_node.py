@@ -172,7 +172,6 @@ class Debugger(DTROS):
     
     def callback(self, image , centroids , error) -> None:
         try:           
-            
             self.points = centroids.data
             image = self.cvbridge.compressed_imgmsg_to_cv2(image)
             self.angleThreshold = 1
@@ -226,8 +225,9 @@ class Debugger(DTROS):
             debug_out_image.header.stamp = rospy.Time.now()
             
             # Publish transformed image
+
             self.debug_img_pub.publish(debug_out_image)
-            #rospy.loginfo("debbuger callback triggered")
+            # rospy.loginfo("debbuger callback triggered")
 
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))

@@ -8,3 +8,21 @@ search_area : {
   top     : 360,
   bottom  : 400
 }
+
+turn_values: {
+  forward_speed: {
+    v    : 0.4,
+    omega: 0,
+    time: 4
+  },
+  left_turn: {
+    v : 0.3,
+    omega : 4,
+    time: 2
+  },
+  right_turn: {
+    v : 0.3,
+    omega : 8,
+    time: 2
+  }
+}

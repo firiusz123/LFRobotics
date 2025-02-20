@@ -10,3 +10,5 @@ normalizer : {
 }
 
 degree: 3
+
+buffer_size: 3

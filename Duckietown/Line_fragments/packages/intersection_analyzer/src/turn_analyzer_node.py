@@ -57,21 +57,21 @@ class TurnAnalyzer(DTROS):
     def forward_threshold(self, image):
         forward_search_area = self.search_area.value['forward_search_area']
         cropped_img = image[forward_search_area['top']:forward_search_area['bottom'], :]
-        rospy.loginfo("Applying forward treshold:")
+        # rospy.loginfo("Applying forward treshold:")
         return self.apply_threshold(cropped_img,forward_search_area['threshold'])
 
     def left_threshold(self, image):
         # Set left search area (1/3 of image width)
         left_search_area = self.search_area.value['left_search_area']
         cropped_img = image[left_search_area['top']:left_search_area['bottom'], left_search_area['left']:left_search_area['right']]
-        rospy.loginfo("Applying left treshold:")
+        # rospy.loginfo("Applying left treshold:")
         return self.apply_threshold(cropped_img,left_search_area['threshold'])
 
     def right_threshold(self, image):
         # Set right search area (last 1/3 of image width)
         right_search_area = self.search_area.value['right_search_area']
         cropped_img = image[right_search_area['top']:right_search_area['bottom'], right_search_area['left']:right_search_area['right']]
-        rospy.loginfo("Applying right treshold:")
+        # rospy.loginfo("Applying right treshold:")
         return self.apply_threshold(cropped_img,right_search_area['threshold'])
 
     def apply_threshold(self, cropped_img, threshold):
@@ -88,7 +88,7 @@ class TurnAnalyzer(DTROS):
         result_image = cv2.bitwise_and(cropped_img, cropped_img, mask=full_mask)
         
         non_zero_pixels = np.count_nonzero(result_image)
-        rospy.loginfo(f"{non_zero_pixels} {threshold}")
+        # rospy.loginfo(f"{non_zero_pixels} {threshold}")
         if non_zero_pixels > threshold:
             return 1
         else:

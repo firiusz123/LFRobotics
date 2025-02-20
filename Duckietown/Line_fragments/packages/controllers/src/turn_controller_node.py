@@ -48,6 +48,8 @@ class TurningNode(DTROS):
         self.v_max = DTParam("~turn_parameters", param_type=ParamType.DICT).value['v_max']
         self.omega_max = DTParam("~turn_parameters", param_type=ParamType.DICT).value['omega_max']
         self.steps = DTParam("~turn_parameters", param_type=ParamType.DICT).value['steps']
+
+        self.turn_values = DTParam('~turn_values', param_type=ParamType.DICT).value
         # Gets possible robot directions and initializes a turn to a random one 
         # self.turn_options_proxy = rospy.ServiceProxy("~get_turn_options", Int32)
 
@@ -69,40 +71,36 @@ class TurningNode(DTROS):
 
     def turn_left(self):
         rospy.loginfo("Turning left")
-        omega_turn = self.omega_max / 6
-        fixed_sleep_duration = self.sleep_duration / self.steps
-        d_omega = omega_turn / self.steps
-        self.turn_control.v = self.v_max / 2
-        turn_steps = self.steps / 1.3
-        turn_steps = int(turn_steps)
-        for i in range(1,turn_steps): # Turn steps
-         # Turn steps
-            self.turn_control.omega += d_omega * i
-            self.control_pub.publish(self.turn_control)
-            rospy.sleep(fixed_sleep_duration)
-            rospy.loginfo(f"Sleeping for {fixed_sleep_duration}")
-    
+        v = self.turn_values['left_turn']['v']
+        omega = self.turn_values['left_turn']['omega']
+        time = self.turn_values['left_turn']['time']
+
+        self.turn_control.v = v
+        self.turn_control.omega = omega
+        self.control_pub.publish(self.turn_control)
+        rospy.sleep(time)
+
     def turn_right(self):
         rospy.loginfo("Turning right")
-        omega_turn = self.omega_max / 6
-        d_omega = omega_turn / self.steps
-        fixed_sleep_duration = self.sleep_duration / self.steps
-        self.turn_control.v = self.v_max / 4
-        turn_steps = self.steps / 1.3
-        turn_steps = int(turn_steps)
-        for i in range(1,turn_steps): # Turn steps
-            self.turn_control.omega -= d_omega * i
-            self.control_pub.publish(self.turn_control)
-            rospy.sleep(fixed_sleep_duration)
-            rospy.loginfo(f"Sleeping for {fixed_sleep_duration}")
+        v = self.turn_values['right_turn']['v']
+        omega = self.turn_values['right_turn']['omega']
+        time = self.turn_values['right_turn']['time']
+
+        self.turn_control.v = v
+        self.turn_control.omega = omega
+        self.control_pub.publish(self.turn_control)
+        rospy.sleep(time)
 
     def go_forward(self):
         rospy.loginfo("Going forward")
-        self.turn_control.omega = 0
-        self.turn_control.v = self.v_max
+        v = self.turn_values['forward_speed']['v']
+        omega = self.turn_values['forward_speed']['omega']
+        time = self.turn_values['forward_speed']['time']
+
+        self.turn_control.v = v
+        self.turn_control.omega = omega
         self.control_pub.publish(self.turn_control)
-        rospy.sleep(self.sleep_duration)
-        rospy.loginfo(f"Sleeping for {self.sleep_duration}")
+        rospy.sleep(time)
 
     def turn(self,option):
         rospy.Rate(100)
