@@ -41,6 +41,8 @@ class DashedLineDetector(DTROS):
         
         self.centers = []
         self.points = []
+        self.error_buffer = [None for i in range(0,4)]
+        self.mean_error = 0
 
         # Poly function and desired horizontal line that should return desired point on polynomial
         self.polyFunction = None
@@ -50,14 +52,6 @@ class DashedLineDetector(DTROS):
         self.max = self.normalizer_param.value["maxValue"]
         self.min = self.normalizer_param.value["minValue"]
         
-
-        self.error = {'raw' : None, 'norm' : None}
-
-        # Subscriber to centroids topic that contains centroid points
-        self.sub_image = rospy.Subscriber('~image/centroids', Float32MultiArray, self.callback, queue_size=1)
-        
-        # Publishers
-        self.error_pub = rospy.Publisher('~image/error' , Float32 , queue_size = 1)
         
     def polyfit(self):
         def notNone(object):
@@ -220,8 +214,22 @@ class DashedLineDetector(DTROS):
             # rospy.loginfo(f"Max value: {self.max} Min value: {self.min} Value of candidate error: {candidateError}")
             # Publish transformed image
             # rospy.loginfo(f"Publishing {self.error['norm']}")
+            if self.error['norm']:
+                self.error_buffer.pop(0)
+                self.error_buffer.append(self.error['norm'])
+            
+            notNone_values = 0
+            for i in range(4):
+                if self.error_buffer[i] != None:
+                    notNone_values+=1
+                    self.mean_error+=self.error_buffer[i]
+            self.mean_error = self.mean_error/notNone_values
+            
+
+
             msg1 = Float32()
-            msg1.data = self.error['norm']
+            msg1.data = self.mean_error
+            
             # msg1.header.stamp = rospy.Time.now()
             self.error_pub.publish(msg1)
             # rospy.loginfo(msg1)
