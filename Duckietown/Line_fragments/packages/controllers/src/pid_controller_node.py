@@ -48,6 +48,8 @@ class PIDController:
         if abs(error) < 5:
             I = self.Ki*(self.prev_int + error * delta_t)
             self.prev_int = I
+        else:
+            I = self.prev_int
         max_int_value = 2
         # anti-windup - preventing the integral error from growing too much
         self.prev_int = min(max(self.prev_int,-max_int_value),max_int_value)
@@ -82,7 +84,8 @@ class WrapperController(DTROS):
         self.controler_param = DTParam('~pid_param', param_type=ParamType.DICT)
 
         # Set maximum angular speed
-        self.omega_max = DTParam('~omega_max', param_type=ParamType.FLOAT)
+        self.omega_param = DTParam('~omega_max', param_type=ParamType.FLOAT)
+        self.omega_max = self.omega_param.value
         
         # Set maximum linear speed
         self.v_max_param = DTParam('~v_max', param_type=ParamType.FLOAT)
@@ -137,7 +140,7 @@ class WrapperController(DTROS):
             pd_value,error,e_int = self.controller.run(0.0, msg.data, self.delta_t.value)
             
             # Scalling output form controller
-            self.twist.omega = self.omega_max.value * pd_value
+            self.twist.omega = self.omega_max * pd_value
             
             rospy.loginfo(pd_value)
             self.twist.v = self.v_max
@@ -165,13 +168,18 @@ class WrapperController(DTROS):
         self.twist.omega = 0
         self.twist.v = 0
         rospy.Rate(100)
-        self.control_pub.publish(self.twist)
+        for _ in range(1000):
+            self.control_pub.publish(self.twist)
         rospy.sleep(2)
         rospy.loginfo("Stop PIDController")
     
     def cbFSMMode(self,  msg) -> None:
         if msg.state=='LANE_FOLLOWING':
             self.v_max = self.v_max_param.value
+            self.omega_max = self.omega_param.value
+        elif msg.state=='STOPPED':
+            self.v_max = 0
+            self.omega_max = 0
 
     def v_callback(self, msg) -> None:
         rospy.loginfo(f"Changing cruise value to {msg.data}")

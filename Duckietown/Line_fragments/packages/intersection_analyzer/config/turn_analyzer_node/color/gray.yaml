@@ -1,6 +1,6 @@
 color: {
   name  : "gray",
-  lower1: [0, 0, 26],
+  lower1: [0  , 0, 26],
   upper1: [180, 150, 131],
   # lower1: [0,0,0],
   # upper1: [255,255,255],

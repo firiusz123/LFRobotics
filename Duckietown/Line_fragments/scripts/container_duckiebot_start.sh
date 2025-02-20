@@ -1,6 +1,7 @@
 #!/bin/bash
 
-IMAGE_NAME="duckietown/dtf:latest-arm64v8"
+IMAGE_NAME="duckietown/line_fragments"
+# IMAGE_NAME="duckietown/dtf:latest-arm64v8"
 RUN_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
 
 RED='\033[0;32m'

@@ -12,7 +12,7 @@ from duckietown.dtros import \
     NodeType, \
     ParamType
 
-from duckietown_msgs.msg import Twist2DStamped
+from duckietown_msgs.msg import Twist2DStamped, FSMState
 
 from random import randint, choice
 
@@ -51,9 +51,16 @@ class TurningNode(DTROS):
         # Gets possible robot directions and initializes a turn to a random one 
         # self.turn_options_proxy = rospy.ServiceProxy("~get_turn_options", Int32)
 
-        self.check_turn_routine_timer = rospy.Timer(rospy.Duration(0.01), self.check_turn_routine)
+
+        # Callback for change of states in FSM
+        self.sub_fsm_mode = rospy.Subscriber("fsm_node/mode",FSMState, self.cbFSMMode, queue_size=1) 
 
         self.turn_routine = False
+
+        self.CALLBACK_METHOD = False
+
+        self.check_turn_routine_timer = rospy.Timer(rospy.Duration(0.01), self.check_turn_routine)
+
 
     def turning_timeout(self):
         sleep_duration = randint(5,7)
@@ -66,7 +73,7 @@ class TurningNode(DTROS):
         fixed_sleep_duration = self.sleep_duration / self.steps
         d_omega = omega_turn / self.steps
         self.turn_control.v = self.v_max / 2
-        turn_steps = self.steps / 1.5
+        turn_steps = self.steps / 1.3
         turn_steps = int(turn_steps)
         for i in range(1,turn_steps): # Turn steps
          # Turn steps
@@ -81,7 +88,7 @@ class TurningNode(DTROS):
         d_omega = omega_turn / self.steps
         fixed_sleep_duration = self.sleep_duration / self.steps
         self.turn_control.v = self.v_max / 4
-        turn_steps = self.steps / 1.5
+        turn_steps = self.steps / 1.3
         turn_steps = int(turn_steps)
         for i in range(1,turn_steps): # Turn steps
             self.turn_control.omega -= d_omega * i
@@ -166,7 +173,8 @@ class TurningNode(DTROS):
         self.turn_control.omega = 0
         # rospy.loginfo("STOPINGSTOPINGSTOPING")
         rospy.Rate(10)
-        self.control_pub.publish(self.turn_control)
+        for _ in range(1000):
+            self.control_pub.publish(self.turn_control)
 
     
     def turning_routine(self):
@@ -183,9 +191,19 @@ class TurningNode(DTROS):
         rospy.loginfo("Shutting down turning node")
         self.turn_routine = False
 
+    def cbFSMMode(self, msg):
+        if msg.state == 'STOPPED':
+            if self.CALLBACK_METHOD:
+                self.turn_routine = True
+            else:
+                self.turning_routine()
+
+        else:
+            self.turn_routine = False
+
     def check_turn_routine(self, event):
         # Periodically check if turn_routine should be executed
-        if self.turn_routine:
+        if self.turn_routine and self.CALLBACK_METHOD:
             self.turning_routine()
 
 if __name__ == "__main__":

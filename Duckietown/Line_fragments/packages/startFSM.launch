@@ -8,7 +8,7 @@
 
     <!-- START Detection nodes -->
     
-    <arg name="color_follow_line" default="yellow" />
+    <!-- <arg name="color_follow_line" default="yellow" />
     <arg name="color_stop_line" default="red" />
 
     <include file="$(find binmask)/launch/binmask_node.launch">
@@ -25,7 +25,9 @@
 
     <include file="$(find debugger)/launch/debugger_node.launch"/>
     
-    <include file="$(find intersection_analyzer)/launch/turn_analyzer_node.launch" />
+    <include file="$(find intersection_analyzer)/launch/turn_analyzer_node.launch" /> -->
+
+    <!-- <include file="./startDebubgger.launch" /> -->
 
     <!-- END Detection nodes -->
 
