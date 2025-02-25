@@ -19,10 +19,10 @@ from duckietown.dtros import \
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Float32MultiArray, Float32
 
-class DashedLineDetector(DTROS):
+class Polyfit(DTROS):
 
     def __init__(self, node_name):
-        super(DashedLineDetector, self).__init__(
+        super(Polyfit, self).__init__(
             node_name=node_name,
             node_type=NodeType.PERCEPTION
         )
@@ -35,6 +35,9 @@ class DashedLineDetector(DTROS):
         self.normalizer_param = DTParam("~normalizer", param_type=ParamType.DICT)
         
         self.angle_treshold = 10
+
+        self.sub_image = rospy.Subscriber('~image/centroids', Float32MultiArray, self.callback, queue_size=1)
+        self.error_pub = rospy.Publisher('~image/error', Float32, queue_size=1)
 
         # Max degree of polynomial to be calculated
         self.poly_degree = DTParam('~degree', param_type=ParamType.INT).value
@@ -184,10 +187,10 @@ class DashedLineDetector(DTROS):
             self.polyfit()
             if self.polyFunction == None or len(self.points) == 0 or self.points == None:
                 msg1 = Float32()
-                msg1.data = self.error['norm']
+                #msg1.data = self.error['norm']
                 # msg1.header.stamp = rospy.Time.now()
-                self.error_pub.publish(msg1)
-                return
+                #self.error_pub.publish(msg1)
+                pass
             # if self.pub_debug_img.anybody_listening():
             # Calculate intersection points
             intersectionXValues = (self.polyFunction - self.zeroPoint[1]).roots.real
@@ -222,8 +225,9 @@ class DashedLineDetector(DTROS):
             if abs(self.error['norm']) > 1:
                 self.error['norm'] = self.mean_error
             if self.error['norm']:
-                self.error_buffer.pop(0)
-                self.error_buffer.append(self.error['norm'])
+                msg1 = Float32()
+                msg1.data = self.error['norm']
+                self.error_pub.publish(msg1)
             
             notNone_values = 0
             self.mean_error = 0
@@ -244,7 +248,7 @@ class DashedLineDetector(DTROS):
             msg1.data = self.median_error if self.median_error else self.mean_error
             # rospy.loginfo(f"Publishit {self.mean_error}")
             # msg1.header.stamp = rospy.Time.now()
-            self.error_pub.publish(msg1)
+            
             # rospy.loginfo(msg1)
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))
@@ -256,5 +260,5 @@ if __name__ == '__main__':
     warnings.filterwarnings("ignore")
     # ===================== TO BE REMOVED =====================
 
-    some_name_node = DashedLineDetector(node_name='dashed_line_detection_node')
+    some_name_node = Polyfit(node_name='dashed_line_detection_node')
     rospy.spin()

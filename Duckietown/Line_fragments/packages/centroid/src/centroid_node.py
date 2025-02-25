@@ -19,10 +19,10 @@ from duckietown.dtros import \
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Float32MultiArray, Float32
 
-class DashedLineDetector(DTROS):
+class Centroids(DTROS):
 
     def __init__(self, node_name):
-        super(DashedLineDetector, self).__init__(
+        super(Centroids, self).__init__(
             node_name=node_name,
             node_type=NodeType.PERCEPTION
         )
@@ -82,7 +82,8 @@ class DashedLineDetector(DTROS):
         
         if M['m00'] != 0:
             # Calculate the center of mass (centroid)
-            cx = int(M['m10'] / M['m00'])
+            cx = int(M['m10'] / M['m00'])self.error_buffer.pop(0)
+                self.error_buffer.append(self.error['norm'])
             cy = int(M['m01'] / M['m00'])
         else:
             return None
@@ -115,6 +116,9 @@ class DashedLineDetector(DTROS):
                 self.points = []
                 for contour in contours:
                     M = cv2.moments(contour)
+                    #A = cv2.contourArea(contour)
+                    #rospy.loginfo(f"contour area info{A}")
+                    #if A > 300:
                     # Check if the moment is valid to avoid division by zero
                     if M['m00'] > threshold:
                         # Calculate the center of mass (centroid)
@@ -201,5 +205,5 @@ if __name__ == '__main__':
     warnings.filterwarnings("ignore")
     # ===================== TO BE REMOVED =====================
 
-    some_name_node = DashedLineDetector(node_name='dashed_line_detection_node')
+    some_name_node = Centroids(node_name='dashed_line_detection_node')
     rospy.spin()
