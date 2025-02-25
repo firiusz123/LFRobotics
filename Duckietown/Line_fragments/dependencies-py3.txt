@@ -3,8 +3,11 @@
 opencv-python
 numpy==1.21
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 # pyqt5
 =======
+=======
+>>>>>>> Stashed changes
 pandas
 pyqt5
 >>>>>>> Stashed changes
