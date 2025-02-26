@@ -1,7 +1,7 @@
 turn_parameters: {
-  v_max: 0.7,
-  omega_max: 8,
-  steps: 10
+  v_max     : 0.7,
+  omega_max : 8,
+  steps     : 10
 }
 
 search_area : {
@@ -11,18 +11,25 @@ search_area : {
 
 turn_values: {
   forward_speed: {
-    v    : 0.4,
-    omega: 0,
-    time: 4
+    v       : 0.4,
+    omega   : 0,
+    time    : 4
   },
   left_turn: {
-    v : 0.3,
-    omega : 4,
-    time: 2
+    v       : 0.3,
+    radius  : 0.34,
+    time    : 4,
+    steps   : 3
   },
   right_turn: {
-    v : 0.3,
-    omega : 8,
-    time: 2
+    v       : 0.3,
+    radius  : 0.13,
+    time    : 4,
+    steps   : 3
+  },
+  short_forward_speed: {
+    v       : 0.3,
+    omega   : 0,
+    time    : 2
   }
 }

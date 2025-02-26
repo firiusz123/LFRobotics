@@ -142,7 +142,7 @@ class WrapperController(DTROS):
             # Scalling output form controller
             self.twist.omega = self.omega_max * pd_value
             
-            rospy.loginfo(pd_value)
+            # rospy.loginfo(pd_value)
             self.twist.v = self.v_max
             # self.twist.omega = self.omega_max.value * pd_value
 
@@ -151,7 +151,7 @@ class WrapperController(DTROS):
             # rospy.loginfo(f"PID Publishing {self.twist.omega} {self.twist.v}")
             self.control_pub.publish(self.twist)
             self.publisher_2.publish(self.twist)
-            rospy.loginfo(f"Should publish {self.twist.omega} {self.twist.v}")
+            # rospy.loginfo(f"Should publish {self.twist.omega} {self.twist.v}")
 
         except Exception as e:
             rospy.logerr("Error: {0}".format(e))
@@ -182,7 +182,7 @@ class WrapperController(DTROS):
             self.omega_max = 0
 
     def v_callback(self, msg) -> None:
-        rospy.loginfo(f"Changing cruise value to {msg.data}")
+        # rospy.loginfo(f"Changing cruise value to {msg.data}")
         self.v_max = msg.data
 
 ###################################################################################

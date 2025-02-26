@@ -49,6 +49,9 @@ class Binmask(DTROS):
 
         # Publishers
         self.pub_mask = rospy.Publisher('~image/mask/compressed',CompressedImage,queue_size = 1)
+
+        self.pub_hsv = rospy.Publisher('~image/mask/hsv/compressed', CompressedImage,queue_size = 1)
+
         # Subscribe to image topic
         self.sub_image = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
         
@@ -73,7 +76,11 @@ class Binmask(DTROS):
             image = cv2.blur(image,(5,5))
             # Convert image to HSV color space
             image_hsv = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
-
+            image_message_hsv = self.cvbridge.cv2_to_compressed_imgmsg(np.concatenate(([image_hsv]),axis=1).reshape(
+               (self.image_param.value['height'], self.image_param.value['width'], 3)), 'jpg')
+            image_message_hsv.header.stamp = rospy.Time.now()
+            self.pub_hsv.publish(image_message_hsv)
+            
             # Find follow line
             lower_mask = cv2.inRange(image_hsv,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
             upper_mask = cv2.inRange(image_hsv, self.color_line_mask['lower2'], self.color_line_mask['upper2'])

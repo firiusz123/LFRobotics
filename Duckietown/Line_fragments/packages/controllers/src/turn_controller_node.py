@@ -45,10 +45,6 @@ class TurningNode(DTROS):
 
         self.turn_options_subscriber = rospy.Subscriber('~turn_options', Int32, self.set_turn_option, queue_size=1)
 
-        self.v_max = DTParam("~turn_parameters", param_type=ParamType.DICT).value['v_max']
-        self.omega_max = DTParam("~turn_parameters", param_type=ParamType.DICT).value['omega_max']
-        self.steps = DTParam("~turn_parameters", param_type=ParamType.DICT).value['steps']
-
         self.turn_values = DTParam('~turn_values', param_type=ParamType.DICT).value
         # Gets possible robot directions and initializes a turn to a random one 
         # self.turn_options_proxy = rospy.ServiceProxy("~get_turn_options", Int32)
@@ -72,33 +68,53 @@ class TurningNode(DTROS):
     def turn_left(self):
         rospy.loginfo("Turning left")
         v = self.turn_values['left_turn']['v']
-        omega = self.turn_values['left_turn']['omega']
+        radius = self.turn_values['left_turn']['radius']
         time = self.turn_values['left_turn']['time']
-
+        omega = v/radius
         self.turn_control.v = v
         self.turn_control.omega = omega
+
+        self.turn_control.header.stamp = rospy.Time.now()
         self.control_pub.publish(self.turn_control)
         rospy.sleep(time)
 
     def turn_right(self):
         rospy.loginfo("Turning right")
         v = self.turn_values['right_turn']['v']
-        omega = self.turn_values['right_turn']['omega']
+        radius = self.turn_values['right_turn']['radius']
         time = self.turn_values['right_turn']['time']
-
+        
+        omega = -v/radius # To turn right the value has to be negative
         self.turn_control.v = v
         self.turn_control.omega = omega
+
+        self.turn_control.header.stamp = rospy.Time.now()
         self.control_pub.publish(self.turn_control)
         rospy.sleep(time)
 
     def go_forward(self):
         rospy.loginfo("Going forward")
         v = self.turn_values['forward_speed']['v']
-        omega = self.turn_values['forward_speed']['omega']
+        omega = self.turn_values['forward_speed']['omega'] # Here we just set r = omega = 0, but actually r = INF, because it's a straight line
         time = self.turn_values['forward_speed']['time']
 
         self.turn_control.v = v
         self.turn_control.omega = omega
+
+        self.turn_control.header.stamp = rospy.Time.now()
+        self.control_pub.publish(self.turn_control)
+        rospy.sleep(time)
+
+    def go_forward_short(self):
+        rospy.loginfo("Going forward a short distance")
+        v = self.turn_values['short_forward_speed']['v']
+        omega = self.turn_values['short_forward_speed']['omega'] # Here we just set r = omega = 0, but actually r = INF, because it's a straight line
+        time = self.turn_values['short_forward_speed']['time']
+
+        self.turn_control.v = v
+        self.turn_control.omega = omega
+
+        self.turn_control.header.stamp = rospy.Time.now()
         self.control_pub.publish(self.turn_control)
         rospy.sleep(time)
 
@@ -116,10 +132,11 @@ class TurningNode(DTROS):
                 self.turn_left()
             # Case for turning left
             # case 3:
-            if option == 3:
+            elif option == 3:
                 self.turn_right()
             # case _:
             else:
+                self.go_forward_short()
                 rospy.logerr("Unknown turn direction")
         except Exception as e:
             self.transmit_resume()
@@ -130,7 +147,8 @@ class TurningNode(DTROS):
         self.transmit_resume()
 
     def set_turn_option(self,msg):
-        rospy.loginfo(f"Set turn options to {self.turn_options}")
+        rospy.loginfo(f"* * * Set turn options to {msg.data}")
+        # rospy.loginfo(f"* * * Acitve {self._switch}")
         self.turn_options = msg.data
 
     def turn_decision(self):
@@ -145,7 +163,9 @@ class TurningNode(DTROS):
         ||--> Right turn
         |---> Left turn 
         """
+        rospy.loginfo("Turning my turing")
         turn_number = self.turn_options
+        turn_number = 2
         i = 1
         options = []
         while turn_number > 0:
@@ -158,21 +178,21 @@ class TurningNode(DTROS):
             self.transmit_resume()
             return 
         self.turn(choice(options))
+        
 
     def transmit_resume(self):
         message = BoolStamped()
         message.header.stamp = rospy.Time.now()
         message.data = True
-        for i in range(10):
-            self.unlock_publisher.publish(message)
+        self.unlock_publisher.publish(message)
         
     def signal_stop(self):
         self.turn_control.v = 0
         self.turn_control.omega = 0
         # rospy.loginfo("STOPINGSTOPINGSTOPING")
-        rospy.Rate(10)
-        for _ in range(1000):
-            self.control_pub.publish(self.turn_control)
+
+        self.turn_control.header.stamp = rospy.Time.now()
+        self.control_pub.publish(self.turn_control)
 
     
     def turning_routine(self):

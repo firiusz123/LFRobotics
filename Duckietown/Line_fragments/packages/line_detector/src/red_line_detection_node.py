@@ -80,7 +80,7 @@ class RedLineDetector(DTROS):
         
         # Append debug circles to check threshold
         cv2.circle(self.debug_image,centerPoint,radius,(0,255,0),2)
-        cv2.circle(self.debug_image,(point[0],point[1]),1,(255,255,255),-1)
+        cv2.circle(self.debug_image,(point[0],point[1]),5,(255,255,255),-1)
 
         return self.line_position_tolerance.value['centerTolerance']**2 >= pointXdistance**2 + pointYdistance**2
 

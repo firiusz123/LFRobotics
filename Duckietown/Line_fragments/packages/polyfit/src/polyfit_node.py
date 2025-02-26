@@ -117,7 +117,7 @@ class Polyfit(DTROS):
                 self.polyFunction = np.poly1d(poly)
                 timeout_event.set()  # Mark the event as finished
             except Exception as e:
-                rospy.loginfo(f"Centeres: {centers} x_points: {x_points} y_points: {y_points} Degree {poly_degree} ")
+                # rospy.loginfo(f"Centeres: {centers} x_points: {x_points} y_points: {y_points} Degree {poly_degree} ")
                 rospy.logerr(e)
                 pass
 
@@ -237,18 +237,23 @@ class Polyfit(DTROS):
                     if self.error_buffer[i] != None:
                         notNone_values+=1
                         self.mean_error+=self.error_buffer[i]
-                self.mean_error = self.mean_error/notNone_values
+                if notNone_values != 0:
+                    self.mean_error = self.mean_error/notNone_values
+                else:
+                    self.mean_error = 0
             else:
                 self.error_buffer.sort()
                 self.median_error = self.error_buffer[self.error_buffer_size//2]
             
-            rospy.loginfo(f"Normalized:\t{self.error['norm']} Median:\t{self.median_error} Mean:\t{self.mean_error}")
+            # rospy.loginfo(f"Normalized:\t{self.error['norm']} Median:\t{self.median_error} Mean:\t{self.mean_error}")
 
             msg1 = Float32()
-            msg1.data = self.median_error if self.median_error else self.mean_error
+            # msg1.data = self.median_error if self.median_error else self.mean_error
             # rospy.loginfo(f"Publishit {self.mean_error}")
-            # msg1.header.stamp = rospy.Time.now()
-            
+            if self.error['norm'] is not None:
+                msg1.data = self.error['norm']
+                # msg1.header.stamp = rospy.Time.now()
+                self.error_pub.publish(msg1)
             # rospy.loginfo(msg1)
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))

@@ -2,7 +2,7 @@
 import copy
 
 import rospy
-from duckietown_msgs.msg import BoolStamped, FSMState, Twist2DStamped
+from duckietown_msgs.msg import BoolStamped, FSMState
 from duckietown_msgs.srv import SetFSMState, SetFSMStateResponse, ChangePattern
 from std_srvs.srv import SetBool
 from std_msgs.msg import String
@@ -231,14 +231,6 @@ class FSMNode:
                 self.publish()
 
     def on_shutdown(self):
-        # To halt the machine if all of the other topics fail
-        control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
-        twist = Twist2DStamped()
-        twist.header.stamp = rospy.Time.now()
-        twist.v = 0
-        twist.omega = 0
-        control_pub.publish(twist)
-        rospy.Rate(100)       
         rospy.loginfo(f"[{self.node_name}] Shutting down.")
 
 

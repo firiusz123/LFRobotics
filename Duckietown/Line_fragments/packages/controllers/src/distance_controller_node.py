@@ -63,7 +63,8 @@ class DriveController(DTROS):
             # Publish events
             self.msg.header.stamp= rospy.Time.now()
             for key in self.pubs:
-                rospy.loginfo(f"{key} \t\t {self.topics[key]}")
+                skibidi_or_not = '\t' if key != 'adaptive_cruise_control' else ''
+                # rospy.loginfo(f"{key}{skibidi_or_not}\t{self.topics[key]}")
                 self.msg.data = self.topics[key]
                 self.pubs[key].publish(self.msg)
 
