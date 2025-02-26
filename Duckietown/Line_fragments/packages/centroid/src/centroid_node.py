@@ -38,10 +38,11 @@ class Centroids(DTROS):
         self.image_param = DTParam('~image_param', param_type=ParamType.DICT)
         # Search area of followed line
         self.search_area = DTParam('~search_area', param_type=ParamType.DICT)
-        self.Centroid_method = DTParam('~centroid_search_method', param_type=ParamType.DICT)
-        self.CentroidAlgo = self.Centroid_method.value['method']
-        self.CentroidThreshold = self.Centroid_method.value['threshold']
-
+        self.centroid_method = DTParam('~centroid_search_method', param_type=ParamType.DICT).value
+        self.centroidAlgo = self.centroid_method['method']
+        if self.centroidAlgo == 0:
+            self.centroid_lower_threshold = self.centroid_method['centroid_lower_threshold']
+            self.centroid_upper_threshold = self.centroid_method['centroid_upper_threshold']
         self.cvbridge = cv_bridge.CvBridge()
 
         # Subscribe to mask topic
@@ -82,55 +83,54 @@ class Centroids(DTROS):
         
         if M['m00'] != 0:
             # Calculate the center of mass (centroid)
-            cx = int(M['m10'] / M['m00'])self.error_buffer.pop(0)
-                self.error_buffer.append(self.error['norm'])
+            cx = int(M['m10'] / M['m00'])
+            self.error_buffer.pop(0)
+            self.error_buffer.append(self.error['norm'])
             cy = int(M['m01'] / M['m00'])
         else:
             return None
         return (cx,cy)
-    def get_centroids_of_image(self,image , threshold):
+    def get_centroids_of_image(self,image):
         # Read input image
-                img = self.cvbridge.compressed_imgmsg_to_cv2(image)
-                # Convert image to HSV color space
-                k = self.search_area.value['width_search']
-                #TODO change to params from config later on 
-                cropped_image = img[: , 0:k]
-                
-                gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_HSV2BGR)
-                gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
+        img = self.cvbridge.compressed_imgmsg_to_cv2(image)
+        # Convert image to HSV color space
+        k = self.search_area.value['width_search']
+        #TODO change to params from config later on 
+        cropped_image = img[: , 0:k]
         
-                # Threshold to create a binary image (single channel)
-                #_, thresh_image = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY)
+        gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_HSV2BGR)
+        gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
 
-
-
-                # Apply binary threshold
-                _, thresh1 = cv2.threshold(gray_image, 10, 255, cv2.THRESH_BINARY)
-
-                # Find contours
-                contours, _ = cv2.findContours(
-                    image=thresh1, 
-                    mode=cv2.RETR_EXTERNAL,  # Retrieves only the outer contours
-                    method=cv2.CHAIN_APPROX_SIMPLE  # Stores all contour points
-                )
-                self.points = []
-                for contour in contours:
-                    M = cv2.moments(contour)
-                    #A = cv2.contourArea(contour)
-                    #rospy.loginfo(f"contour area info{A}")
-                    #if A > 300:
-                    # Check if the moment is valid to avoid division by zero
-                    if M['m00'] > threshold:
-                        # Calculate the center of mass (centroid)
-                        cx = int(M['m10'] / M['m00'])
-                        cy = int(M['m01'] / M['m00'])
-                        self.points.append((cx,cy))
+        # Threshold to create a binary image (single channel)
+        #_, thresh_image = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY)
+        # Apply binary threshold
+        _, thresh1 = cv2.threshold(gray_image, 10, 255, cv2.THRESH_BINARY)
+        # Find contours
+        contours, _ = cv2.findContours(
+            image=thresh1, 
+            mode=cv2.RETR_EXTERNAL,  # Retrieves only the outer contours
+            method=cv2.CHAIN_APPROX_SIMPLE  # Stores all contour points
+        )
+        self.points = []
+        for contour in contours:
+            M = cv2.moments(contour)
+            A = cv2.contourArea(contour)
+            rospy.loginfo(f"contour area info{A}")
+            if self.centroidAlgo == 0:
+                if A > self.centroid_upper_threshold or A < self.centroid_lower_threshold:
+                    continue
+            # Check if the moment is valid to avoid division by zero
+            if M['m00'] > 10:
+                # Calculate the center of mass (centroid)
+                cx = int(M['m10'] / M['m00'])
+                cy = int(M['m01'] / M['m00'])
+                self.points.append((cx,cy))
                     
             
 
     
     def callback(self, msg) -> None:
-        if self.CentroidAlgo == 1:
+        if self.centroidAlgo == 1:
             try:           
                 # Read input image
                 image = self.cvbridge.compressed_imgmsg_to_cv2(msg)
@@ -184,9 +184,9 @@ class Centroids(DTROS):
                 rospy.logerr("CvBridge Error: {0}".format(e))
     #############################################################################################
         #2nd type 
-        elif self.CentroidAlgo == 0:
+        elif self.centroidAlgo == 0:
             try:           
-                self.get_centroids_of_image(msg , self.CentroidThreshold)
+                self.get_centroids_of_image(msg)
                     
                 # Publish the centers 
                 if self.points:
