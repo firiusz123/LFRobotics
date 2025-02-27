@@ -17,6 +17,6 @@ centroid_search_method : {
   # method = 1 finding contours by slicing 
   method : 0,
   #threshold of moment of each contour 
-  centroid_lower_threshold: 100,
-  centroid_upper_threshold: 10000
+  centroid_lower_threshold: 20,
+  centroid_upper_threshold: 100000
 }

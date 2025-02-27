@@ -7,7 +7,7 @@ import cv_bridge
 import threading
 import numpy as np
 from math import sqrt
-import matplotlib.pyplot as plt  
+# import matplotlib.pyplot as plt  
 
 # import DTROS-related classes
 from duckietown.dtros import \

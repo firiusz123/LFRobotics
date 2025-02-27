@@ -50,7 +50,6 @@ ENV DT_MAINTAINER "${MAINTAINER}"
 ENV DT_REPO_PATH "${REPO_PATH}"
 ENV DT_LAUNCH_PATH "${LAUNCH_PATH}"
 ENV DT_LAUNCHER "${LAUNCHER}"
-ENV ROS_PACKAGE_PATH="/code/catkin_ws/src/DTF/packages/controllers:/code/catkin_ws/src/DTF/packages/datasync:/code/catkin_ws/src/dt-ros-commons/packages/duckietown:/code/catkin_ws/src/dt-ros-commons/packages/duckietown_msgs:/code/catkin_ws/src/dt-ros-commons/packages/duckietown_protocols:/code/catkin_ws/src/dt-ros-commons/packages/ros_commons:/code/catkin_ws/src/dt-ros-commons/packages/ros_http_api:/code/catkin_ws/src/DTF/packages/sensing:/opt/ros/noetic/share:/code/catkin_ws/src/DTF/packages/controllers:/code/catkin_ws/src/DTF/packages/datasync:/code/catkin_ws/src/DTF/packages/line_detector:/code/catkin_ws/src/DTF/packages/poly_fit:/code/catkin_ws/src/DTF/packages/state_controller:/code/catkin_ws/src/DTF/packages/red_line:/code/catkin_ws/src/DTF/packages/fsm"
 
 # install apt dependencies
 COPY ./dependencies-apt.txt "${REPO_PATH}/"
@@ -66,10 +65,16 @@ RUN python3 -m pip install  -r ${REPO_PATH}/dependencies-py3.txt
 # copy the source code
 COPY ./packages "${REPO_PATH}/packages"
 
+# Clone ros genpy for quick fix
+# RUN git clone https://github.com/ros/genpy
+
 # build packages
 RUN . /opt/ros/${ROS_DISTRO}/setup.sh && \
   catkin build \
     --workspace ${CATKIN_WS_DIR}/
+
+# RUN sudo apt-get install --reinstall python-genpy && \
+#     sudo apt-get install --reinstall ros-melodic-genpy
 
 # install launcher scripts
 COPY ./launchers/. "${LAUNCH_PATH}/"

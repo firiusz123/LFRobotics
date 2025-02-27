@@ -70,12 +70,15 @@ class TurningNode(DTROS):
         v = self.turn_values['left_turn']['v']
         radius = self.turn_values['left_turn']['radius']
         time = self.turn_values['left_turn']['time']
-        omega = v/radius
+        scale_factor = self.turn_values['left_turn']['scale_factor']
+
+        omega = v/radius * scale_factor
         self.turn_control.v = v
         self.turn_control.omega = omega
 
         self.turn_control.header.stamp = rospy.Time.now()
-        self.control_pub.publish(self.turn_control)
+        for _ in range(1000):
+            self.control_pub.publish(self.turn_control)
         rospy.sleep(time)
 
     def turn_right(self):
@@ -83,13 +86,15 @@ class TurningNode(DTROS):
         v = self.turn_values['right_turn']['v']
         radius = self.turn_values['right_turn']['radius']
         time = self.turn_values['right_turn']['time']
-        
-        omega = -v/radius # To turn right the value has to be negative
+        scale_factor = self.turn_values['right_turn']['scale_factor']
+
+        omega = -v/radius * scale_factor # To turn right the value has to be negative
         self.turn_control.v = v
         self.turn_control.omega = omega
 
         self.turn_control.header.stamp = rospy.Time.now()
-        self.control_pub.publish(self.turn_control)
+        for _ in range(1000):
+            self.control_pub.publish(self.turn_control)
         rospy.sleep(time)
 
     def go_forward(self):
@@ -102,7 +107,8 @@ class TurningNode(DTROS):
         self.turn_control.omega = omega
 
         self.turn_control.header.stamp = rospy.Time.now()
-        self.control_pub.publish(self.turn_control)
+        for _ in range(1000):
+            self.control_pub.publish(self.turn_control)
         rospy.sleep(time)
 
     def go_forward_short(self):
@@ -115,7 +121,8 @@ class TurningNode(DTROS):
         self.turn_control.omega = omega
 
         self.turn_control.header.stamp = rospy.Time.now()
-        self.control_pub.publish(self.turn_control)
+        for _ in range(1000):
+            self.control_pub.publish(self.turn_control)
         rospy.sleep(time)
 
     def turn(self,option):
@@ -184,7 +191,8 @@ class TurningNode(DTROS):
         message = BoolStamped()
         message.header.stamp = rospy.Time.now()
         message.data = True
-        self.unlock_publisher.publish(message)
+        for _ in range(1000):
+            self.unlock_publisher.publish(message)
         
     def signal_stop(self):
         self.turn_control.v = 0
@@ -192,7 +200,8 @@ class TurningNode(DTROS):
         # rospy.loginfo("STOPINGSTOPINGSTOPING")
 
         self.turn_control.header.stamp = rospy.Time.now()
-        self.control_pub.publish(self.turn_control)
+        for _ in range(1000):
+            self.control_pub.publish(self.turn_control)
 
     
     def turning_routine(self):

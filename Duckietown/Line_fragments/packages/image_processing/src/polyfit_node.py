@@ -187,74 +187,75 @@ class Polyfit(DTROS):
             self.polyfit()
             if self.polyFunction == None or len(self.points) == 0 or self.points == None:
                 msg1 = Float32()
-                #msg1.data = self.error['norm']
+                msg1.data = self.error['norm'] if self.error['norm'] != None else 0
                 # msg1.header.stamp = rospy.Time.now()
-                #self.error_pub.publish(msg1)
+                self.error_pub.publish(msg1)
                 pass
-            # if self.pub_debug_img.anybody_listening():
-            # Calculate intersection points
-            intersectionXValues = (self.polyFunction - self.zeroPoint[1]).roots.real
-            intersectionPoints = [ (x,self.zeroPoint[1]) for x in intersectionXValues ]
-            # Get all of the green point from line fragments to
-             
-            closestLinePoint = self.select_closest_point_y(self.points,self.zeroPoint[1])
-            # Get the closest point from intersection points to the one calculated previously
-            extendedLinePoint = self.select_closest_point_reference(intersectionPoints,closestLinePoint)
-            
-            #for intersection in intersectionXValues:
-            #    cv2.circle(image, (int(intersection), self.zeroPoint[1]), 10, (0,0,255), -1)
-                        
-            candidateError = float('inf')
-            # for intersectionX in intersectionXValues:
-            #     candidateError = min(candidateError,(self.zeroPoint[0] - max(intersectionXValues))).real
-            candidateError = self.zeroPoint[0] - extendedLinePoint[0]
-            self.error['raw'] = candidateError
-            # Due to problems with PID, the values of min and max will be fixed
-            # if self.error['raw'] > self.max:
-            #     self.max = self.error['raw']
-            # if self.error['raw'] < self.min:
-            #     self.min = self.error['raw']
-            if self.max != self.min:
-                norm = 2 * (self.error['raw'] - self.min) / (self.max - self.min) - 1
-            else:
-                norm = 0  # Or any default normalized value
-            self.error['norm'] = norm.real
-            # rospy.loginfo(f"Max value: {self.max} Min value: {self.min} Value of candidate error: {candidateError}")
-            # Publish transformed image
-            # rospy.loginfo(f"Publishing {self.error['norm']}")
-            if abs(self.error['norm']) > 1:
-                self.error['norm'] = self.mean_error
-            if self.error['norm']:
-                msg1 = Float32()
-                msg1.data = self.error['norm']
-                self.error_pub.publish(msg1)
-            
-            notNone_values = 0
-            self.mean_error = 0
-            self.median_error = None
-            if None in self.error_buffer: 
-                for i in range(self.error_buffer_size):
-                    if self.error_buffer[i] != None:
-                        notNone_values+=1
-                        self.mean_error+=self.error_buffer[i]
-                if notNone_values != 0:
-                    self.mean_error = self.mean_error/notNone_values
+            if self.polyFunction != None:
+                # if self.pub_debug_img.anybody_listening():
+                # Calculate intersection points
+                intersectionXValues = (self.polyFunction - self.zeroPoint[1]).roots.real
+                intersectionPoints = [ (x,self.zeroPoint[1]) for x in intersectionXValues ]
+                # Get all of the green point from line fragments to
+                
+                closestLinePoint = self.select_closest_point_y(self.points,self.zeroPoint[1])
+                # Get the closest point from intersection points to the one calculated previously
+                extendedLinePoint = self.select_closest_point_reference(intersectionPoints,closestLinePoint)
+                
+                #for intersection in intersectionXValues:
+                #    cv2.circle(image, (int(intersection), self.zeroPoint[1]), 10, (0,0,255), -1)
+                            
+                candidateError = float('inf')
+                # for intersectionX in intersectionXValues:
+                #     candidateError = min(candidateError,(self.zeroPoint[0] - max(intersectionXValues))).real
+                candidateError = self.zeroPoint[0] - extendedLinePoint[0]
+                self.error['raw'] = candidateError
+                # Due to problems with PID, the values of min and max will be fixed
+                # if self.error['raw'] > self.max:
+                #     self.max = self.error['raw']
+                # if self.error['raw'] < self.min:
+                #     self.min = self.error['raw']
+                if self.max != self.min:
+                    norm = 2 * (self.error['raw'] - self.min) / (self.max - self.min) - 1
                 else:
-                    self.mean_error = 0
-            else:
-                self.error_buffer.sort()
-                self.median_error = self.error_buffer[self.error_buffer_size//2]
-            
-            # rospy.loginfo(f"Normalized:\t{self.error['norm']} Median:\t{self.median_error} Mean:\t{self.mean_error}")
+                    norm = 0  # Or any default normalized value
+                self.error['norm'] = norm.real
+                # rospy.loginfo(f"Max value: {self.max} Min value: {self.min} Value of candidate error: {candidateError}")
+                # Publish transformed image
+                # rospy.loginfo(f"Publishing {self.error['norm']}")
+                if abs(self.error['norm']) > 1:
+                    self.error['norm'] = self.mean_error
+                if self.error['norm']:
+                    msg1 = Float32()
+                    msg1.data = self.error['norm']
+                    self.error_pub.publish(msg1)
+                
+                notNone_values = 0
+                self.mean_error = 0
+                self.median_error = None
+                if None in self.error_buffer: 
+                    for i in range(self.error_buffer_size):
+                        if self.error_buffer[i] != None:
+                            notNone_values+=1
+                            self.mean_error+=self.error_buffer[i]
+                    if notNone_values != 0:
+                        self.mean_error = self.mean_error/notNone_values
+                    else:
+                        self.mean_error = 0
+                else:
+                    self.error_buffer.sort()
+                    self.median_error = self.error_buffer[self.error_buffer_size//2]
+                
+                # rospy.loginfo(f"Normalized:\t{self.error['norm']} Median:\t{self.median_error} Mean:\t{self.mean_error}")
 
-            msg1 = Float32()
-            # msg1.data = self.median_error if self.median_error else self.mean_error
-            # rospy.loginfo(f"Publishit {self.mean_error}")
-            if self.error['norm'] is not None:
-                msg1.data = self.error['norm']
-                # msg1.header.stamp = rospy.Time.now()
-                self.error_pub.publish(msg1)
-            # rospy.loginfo(msg1)
+                msg1 = Float32()
+                # msg1.data = self.median_error if self.median_error else self.mean_error
+                # rospy.loginfo(f"Publishit {self.mean_error}")
+                if self.error['norm'] is not None:
+                    msg1.data = self.error['norm']
+                    # msg1.header.stamp = rospy.Time.now()
+                    self.error_pub.publish(msg1)
+                # rospy.loginfo(msg1)
         except cv_bridge.CvBridgeError as e:
             rospy.logerr("CvBridge Error: {0}".format(e))
 

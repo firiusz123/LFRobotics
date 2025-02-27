@@ -20,6 +20,7 @@ from random import randint
 # import messages and services
 from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import Float32MultiArray, Float32, Int32
+from duckietown_msgs.msg import Twist2DStamped
 import message_filters
 
 class TurnAnalyzer(DTROS):
@@ -35,6 +36,7 @@ class TurnAnalyzer(DTROS):
         self.pub_turn_options = rospy.Publisher('~options', Int32, queue_size=1)
         
         self.sub_image = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
+        self.sub_test = rospy.Subscriber('~spinme', Twist2DStamped, self.test_cb,queue_size=1)
 
         # Read color mask  
         self.color = DTParam('~color', param_type=ParamType.DICT)
@@ -93,6 +95,9 @@ class TurnAnalyzer(DTROS):
             return 1
         else:
             return 0
+
+    def test_cb(self,msg):
+        rospy.loginfo(f"Well it's turning alright {msg.data}")
 
     def callback(self,msg):
         try:

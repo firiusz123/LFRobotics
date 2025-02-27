@@ -149,6 +149,8 @@ class WrapperController(DTROS):
             
             # Publish control
             # rospy.loginfo(f"PID Publishing {self.twist.omega} {self.twist.v}")
+
+            self.twist.header.stamp = rospy.Time.now()
             self.control_pub.publish(self.twist)
             self.publisher_2.publish(self.twist)
             # rospy.loginfo(f"Should publish {self.twist.omega} {self.twist.v}")
@@ -177,9 +179,13 @@ class WrapperController(DTROS):
         if msg.state=='LANE_FOLLOWING':
             self.v_max = self.v_max_param.value
             self.omega_max = self.omega_param.value
-        elif msg.state=='STOPPED':
+        else:
             self.v_max = 0
             self.omega_max = 0
+            self.twist.v = self.v_max
+            self.twist.omega = self.omega_max
+            self.twist.header.stamp = rospy.Timer.now()
+            self.control_pub.publish(self.twist)
 
     def v_callback(self, msg) -> None:
         # rospy.loginfo(f"Changing cruise value to {msg.data}")

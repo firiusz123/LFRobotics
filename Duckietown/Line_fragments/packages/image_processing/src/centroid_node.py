@@ -112,12 +112,12 @@ class Centroids(DTROS):
             method=cv2.CHAIN_APPROX_SIMPLE  # Stores all contour points
         )
         self.points = []
-        for contour in contours:
+        for index,contour in enumerate(contours):
             M = cv2.moments(contour)
             A = cv2.contourArea(contour)
-            rospy.loginfo(f"contour area info{A}")
             if self.centroidAlgo == 0:
                 if A > self.centroid_upper_threshold or A < self.centroid_lower_threshold:
+                    # rospy.loginfo(f"Too small or too large {A} in countour number {index}")
                     continue
             # Check if the moment is valid to avoid division by zero
             if M['m00'] > 10:

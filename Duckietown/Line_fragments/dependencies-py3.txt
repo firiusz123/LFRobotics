@@ -1,17 +1,10 @@
-# LIST YOUR PYTHON3 PACKAGES HERE
-# mlocate
-opencv-python
-numpy==1.21
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-# pyqt5
-=======
-=======
->>>>>>> Stashed changes
-pandas
-pyqt5
->>>>>>> Stashed changes
-# tensorflow
-torch
-control
-bagpy
+## LIST YOUR PYTHON3 PACKAGES HERE
+## mlocate
+#opencv-python
+#numpy==1.21
+#pandas
+#pyqt5
+## tensorflow
+#torch
+#control
+#bagpy

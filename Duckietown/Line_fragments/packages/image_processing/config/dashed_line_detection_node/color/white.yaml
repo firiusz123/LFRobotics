@@ -1,0 +1,10 @@
+color: {
+  name  : "white",
+  lower1: [0, 0, 125],
+  upper1: [180, 125, 255],
+  lower2: [0, 0, 0],
+  upper2: [0, 0, 0]
+}
+
+# Hue 0-180, saturation, value 0-255
+# https://stackoverflow.com/questions/22588146/tracking-white-color-using-python-opencv
