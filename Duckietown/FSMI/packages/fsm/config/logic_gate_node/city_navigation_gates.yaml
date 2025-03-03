@@ -1,0 +1,32 @@
+# events:
+  
+#   at_stop_line:
+#     topic: "~red_line_detection_node" # Topic for red line detector
+#     msg_type: "BoolStamped"
+#     trigger: True
+  
+#   line_following:
+#     topic: "~line_follower_node" # Topic for line following ativation, should activate after at_stop_line 
+#     msg_type: "BoolStamped"
+#     trigger: True
+
+#   turning:
+#     topic: "~turn_node" # Topic for turning on the crossing
+#     msg_type: "BoolStamped"
+#     trigger: True
+  
+# gates:
+  
+#   stop_at_red_line:
+#   gate_type: "AND"
+#   inputs:
+#     - at_stop_line
+#     - line_following
+#   output_topic: "~stop_at_red_line"
+  
+#   turn_on_intersection:
+#     gate_type: "AND"
+#     inputs:
+#       - at_stop_line
+#       - turning
+#   output_topic: "~turn_on_intersection"

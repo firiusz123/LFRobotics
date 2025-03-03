@@ -61,7 +61,7 @@ class StopNode(DTROS):
         self.turn_control.v = 1.0  # You can set a default velocity
         self.turn_control.omega = 0.0  # You can set a default angular velocity
         
-        self.turn_control = rospy.Timer.now() 
+        self.turn_control = rospy.Time.now() 
         self.control_pub.publish(self.turn_control)
         rospy.loginfo("Resuming movement")
 

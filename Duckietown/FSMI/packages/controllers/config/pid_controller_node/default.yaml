@@ -1,0 +1,11 @@
+v_max     : 0.4
+omega_max : 8.0
+
+delta_t   : 0.033333333
+
+# PID parameters
+pid_param : {
+  Kp        : 1.0,
+  Ki        : 0.1,
+  Kd        : 0.0,
+}

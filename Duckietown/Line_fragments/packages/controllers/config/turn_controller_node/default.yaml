@@ -23,8 +23,8 @@ turn_values: {
     scale_factor: 2 
   },
   right_turn: {
-    v           : 0.3,
-    radius      : 0.2,
+    v           : 0.2,
+    radius      : 0.3,
     time        : 2,
     steps       : 3,
     scale_factor: 3

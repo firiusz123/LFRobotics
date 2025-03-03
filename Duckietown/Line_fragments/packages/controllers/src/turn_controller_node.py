@@ -167,12 +167,11 @@ class TurningNode(DTROS):
         Turn number determines in which direction robot can go, it's a number between 0 and 7, with bits x, y and z defined:
         xyz
         |||-> Going forward
-        ||--> Right turn
-        |---> Left turn 
+        ||--> Left turn
+        |---> Right turn 
         """
         rospy.loginfo("Turning my turing")
         turn_number = self.turn_options
-        turn_number = 2
         i = 1
         options = []
         while turn_number > 0:
@@ -183,9 +182,12 @@ class TurningNode(DTROS):
             turn_number //= 2
         if len(options) == 0 or options is None:
             self.transmit_resume()
-            return 
-        self.turn(choice(options))
+            return
         
+        rospy.loginfo(f"Those are your options here: {options}") 
+        chosen = choice(options)
+        rospy.loginfo(f"You have been chosen (1 - f, 2 - l, 3 - r) {chosen}")
+        self.turn(chosen)
 
     def transmit_resume(self):
         message = BoolStamped()

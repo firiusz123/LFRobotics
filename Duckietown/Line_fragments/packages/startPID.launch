@@ -8,15 +8,15 @@
         <arg name="color_line" value="$(arg color_line)" />
     </include> -->
 
-    <include file="$(find binmask)/launch/binmask_node.launch">
+    <include file="$(find image_processing)/launch/binmask_node.launch">
         <arg name="color_line" value="$(arg color_follow_line)" />
     </include>
 
-    <include file="$(find centroid)/launch/centroid_node.launch" />
+    <include file="$(find image_processing)/launch/centroid_node.launch" />
 
-    <include file="$(find polyfit)/launch/polyfit_node.launch" />
+    <include file="$(find image_processing)/launch/polyfit_node.launch" />
 
-    <include file="$(find line_detector)/launch/red_line_detection_node.launch"/>
+    <include file="$(find image_processing)/launch/red_line_detection_node.launch"/>
 
     <!-- <include file="$(find poly_fit)/launch/polynomial_data_fitting.launch"> -->
     <!-- </include> -->

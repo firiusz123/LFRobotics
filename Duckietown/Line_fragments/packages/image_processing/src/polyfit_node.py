@@ -75,6 +75,7 @@ class Polyfit(DTROS):
         filteredCenters = filter(notNone, self.points)
         if len(self.points) == 0:
             return
+        # Points have to be ordered by increasing value of x
         x_points, y_points = [], []
         centers = []
         for element in filteredCenters:

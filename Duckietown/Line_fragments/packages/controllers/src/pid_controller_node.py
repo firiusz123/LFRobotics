@@ -184,7 +184,7 @@ class WrapperController(DTROS):
             self.omega_max = 0
             self.twist.v = self.v_max
             self.twist.omega = self.omega_max
-            self.twist.header.stamp = rospy.Timer.now()
+            self.twist.header.stamp = rospy.Time.now()
             self.control_pub.publish(self.twist)
 
     def v_callback(self, msg) -> None:

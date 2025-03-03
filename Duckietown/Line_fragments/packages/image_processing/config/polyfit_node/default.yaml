@@ -1,6 +1,6 @@
 
 follow_point : {
-  pointX: 60,
+  pointX: 0,
   pointY: 380
 }
 

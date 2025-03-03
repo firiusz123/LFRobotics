@@ -1,0 +1,50 @@
+# FOR REFERENCE CHECK https://github.com/duckietown/dt-core/
+
+initial_state: "PARKED"
+
+events:
+  start_following:
+    topic: "~start_driving"
+    msg_type: "BoolStamped"
+    trigger: True
+#   red_line_detected:
+#     topic: "~stop_at_red_line" # Red line detection topic
+#     msg_type: "BoolStamped"
+#     trigger: True
+#    turn_on_intersection:
+#     topic: "~turn_on_intersection" # Turn topic
+#     mgs_type: "BoolStamped"
+#     trigger: False
+
+nodes:
+  line_following_node: "/d3/dashed_line_detection_node" # PID node
+  # turning_node: "" # Special node for turning
+
+global_transmissions:
+  # red_line_detected: "STOPPED"
+  # turning_on_intersection: "TURNING"
+  line_following: "LINE_FOLLOWING" 
+
+states:
+  PARKED:
+    activate_nodes:
+      - idle_node
+      - line_following_node
+    lights: "GREEN"
+  LINE_FOLLOWING: 
+    activate_nodes:
+      - line_following_node
+      - red_line_detector_node
+    lights: "CAR_DRIVING"
+  # STOPPED:
+  #   active_nodes:
+  #     - turn_decision_node # Initally randomizes the turn and send the signal to move from place, publishes for turning_node to activate
+  #   lights: "RED"
+  # # EMERGENCY_STOP:
+  # #   active_nodes:
+  # #     - emergency_handler
+  # #   lights: "RED"
+  # TURNING: 
+  #   activate_nodes:
+  #     - turning_node
+  #   lights: "GREEN"
