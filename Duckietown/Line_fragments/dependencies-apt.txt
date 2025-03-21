@@ -1,4 +1,6 @@
 # LIST YOUR APT PACKAGES HERE
 
+ros-noetic-image-geometry
+
 # python3.8-tk
 # libhdf5-dev
