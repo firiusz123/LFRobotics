@@ -4,8 +4,8 @@
 initial_state: "LANE_FOLLOWING"
 
 events:
-  red_line_detected:
-    topic: "red_line_detection_node/red_line_detection" # Red line detection topic
+  line_detected:
+    topic: "line_detection_node/line_detection" # Red line detection topic
     msg_type: "BoolStamped"
     trigger: True
  
@@ -59,7 +59,7 @@ states:
   LANE_FOLLOWING:
     transitions:
       adaptive_cruise_control_on : "ADAPTIV_CRUISE_CONTROL"
-      red_line_detected: "STOPPED"
+      line_detected: "STOPPED"
     active_nodes:
       - pid_controller_node
     lights: "CAR_DRIVING"

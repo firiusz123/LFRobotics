@@ -16,7 +16,7 @@
 
     <include file="$(find image_processing)/launch/polyfit_node.launch" />
 
-    <include file="$(find image_processing)/launch/red_line_detection_node.launch">
+    <include file="$(find fsm)/launch/line_detection_node.launch">
         <arg name="color_line" value="$(arg color_stop_line)"/>
     </include>
 

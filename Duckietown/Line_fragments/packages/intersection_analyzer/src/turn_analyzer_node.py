@@ -41,15 +41,6 @@ class TurnAnalyzer(DTROS):
         # Read color mask  
         self.color = DTParam('~color', param_type=ParamType.DICT)
 
-        # # Camera parameters
-        # self.image_param = DTParam('~image_param', param_type=ParamType.DICT)
-
-        # # Search area of followed line
-        # self.search_area = DTParam('~search_area', param_type=ParamType.DICT)
-
-        # # Convert color mask to np.array
-        # self.color_line_mask = {k : np.array(v) for k, v in self.color.value.items()}
-        
         self.cvbridge = cv_bridge.CvBridge()
         
         self.hue = None
@@ -89,7 +80,8 @@ class TurnAnalyzer(DTROS):
         # Apply mask to image
         result_image = cv2.bitwise_and(cropped_img, cropped_img, mask=full_mask)
         
-        non_zero_pixels = np.count_nonzero(result_image)
+        non_zero_pixels = cv2.countNonZero(result_image)
+        # non_zero_pixels = np.count_nonzero(result_image)
         # rospy.loginfo(f"{non_zero_pixels} {threshold}")
         if non_zero_pixels > threshold:
             return 1
