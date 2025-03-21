@@ -60,7 +60,7 @@ class NNController(DTROS):
 
         self.twist = Twist2DStamped()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = torch.load('/code/catkin_ws/src/DTF/packages/controllers/config/skillissue1.pth' , weights_only=False)
+        self.model = torch.load('/code/catkin_ws/src/DTF/packages/controllers/config/skillissue2.pth' , weights_only=False)
         self.model.to(self.device)
         self.model.eval()
         # Message to publish
