@@ -19,7 +19,7 @@
 
     <include file="$(find polyfit)/launch/polyfit_node.launch" />
 
-    <include file="$(find line_detector)/launch/red_line_detection_node.launch">
+    <include file="$(find line_detector)/launch/line_detection_node.launch">
         <arg name="color_line" value="$(arg color_stop_line)"/>
     </include>
 

@@ -9,9 +9,9 @@ from duckietown_msgs.msg import BoolStamped
 from sensor_msgs.msg import CompressedImage
 from duckietown.dtros import DTROS, DTParam, NodeType, ParamType
 
-class RedLineDetector(DTROS):
+class LineDetector(DTROS):
     def __init__(self, node_name):
-        super(RedLineDetector, self).__init__(
+        super(LineDetector, self).__init__(
             node_name=node_name,
             node_type=NodeType.PERCEPTION
         )
@@ -26,12 +26,12 @@ class RedLineDetector(DTROS):
         self.cvbridge = cv_bridge.CvBridge()
         self.color_line_mask = {k: np.array(v) for k, v in self.color.value.items()}
 
-        self.red_line_detected_pub = rospy.Publisher('~red_line_detection', BoolStamped, queue_size=1)
+        self.line_detected_pub = rospy.Publisher('~line_detection', BoolStamped, queue_size=1)
 
         # Subscribe to the image topic
         self.sub_image = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
 
-        self.pub_image = rospy.Publisher('~red_line/image/out/compressed', CompressedImage, queue_size=1)
+        self.pub_image = rospy.Publisher('~line/image/out/compressed', CompressedImage, queue_size=1)
 
         self.cont_pub_image = rospy.Publisher('~center/image/out/compressed', CompressedImage, queue_size=1)
 
@@ -84,9 +84,9 @@ class RedLineDetector(DTROS):
 
         return self.line_position_tolerance.value['centerTolerance']**2 >= pointXdistance**2 + pointYdistance**2
 
-    def detected_line_using_red_result(self, red_result, threshold=0.1):
-        # Convert the red result to grayscale to count non-zero intensities
-        grayscaleRed = cv2.cvtColor(red_result, cv2.COLOR_BGR2GRAY)
+    def detected_line_using_result(self, result, threshold=0.1):
+        # Convert the result to grayscale to count non-zero intensities
+        grayscaleRed = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
 
         # Count the number of non-zero pixels
         nonZeroPixels = np.count_nonzero(grayscaleRed)
@@ -94,7 +94,7 @@ class RedLineDetector(DTROS):
         # Calculate the total number of pixels in the image
         totalPixels = grayscaleRed.size
 
-        # Calculate the percentage of non-zero pixels (red intensity detected)
+        # Calculate the percentage of non-zero pixels (intensity detected)
         redPercentage = nonZeroPixels / totalPixels
 
         return True if redPercentage >= threshold else False
@@ -110,37 +110,29 @@ class RedLineDetector(DTROS):
         # Convert the blurred image to HSV color space
         hsv_image = cv2.cvtColor(blurred_image, cv2.COLOR_BGR2HSV)
 
-        # Define the HSV range for detecting red
-        # lower_red1 = np.array([0, 120, 70])
-        # upper_red1 = np.array([10, 255, 255])
-        # lower_red2 = np.array([170, 120, 70])
-        # upper_red2 = np.array([180, 255, 255])
-
-        # Create masks for the red color ranges
+        # Create masks for the color ranges
         lower_mask = cv2.inRange(hsv_image,self.color_line_mask['lower1'], self.color_line_mask['upper1'])
         upper_mask = cv2.inRange(hsv_image, self.color_line_mask['lower2'], self.color_line_mask['upper2'])
 
-        # mask1 = cv2.inRange(hsv_image, lower_red1, upper_red1)
-        # mask2 = cv2.inRange(hsv_image, lower_red2, upper_red2)
-        red_mask = cv2.bitwise_or(lower_mask,upper_mask)
+        mask = cv2.bitwise_or(lower_mask,upper_mask)
 
-        # Apply the mask to the blurred image to extract red regions
-        red_result = cv2.bitwise_and(blurred_image, blurred_image, mask=red_mask)
+        # Apply the mask to the blurred image to extract regions
+        result = cv2.bitwise_and(blurred_image, blurred_image, mask=mask)
 
-        self.debug_image = red_result
+        self.debug_image = result
 
-        return red_result
-        # return self.detected_line_using_red_result(red_result)
+        return result
+        # return self.detected_line_using_result(result)
 
     def line_detected(self,image):
-        return self.detected_line_using_red_result(self.process_image(image))
+        return self.detected_line_using_result(self.process_image(image))
 
     def callback(self, msg) -> None:
         try:
             # Convert the compressed image message to an OpenCV image
             image = self.cvbridge.compressed_imgmsg_to_cv2(msg)
 
-            # Process the image to check if the red line is detected
+            # Process the image to check if the line is detected
             lineInThreshold = self.line_detected(image)
             # rospy.loginfo(self.calculate_center(image))
             lineInCenter = self.check_tolerance(self.calculate_center(image))
@@ -157,13 +149,13 @@ class RedLineDetector(DTROS):
             self.debug_out_image.header.stamp = rospy.Time.now()
             self.pub_image.publish(self.debug_out_image)
             # Publish the result
-            self.red_line_detected_pub.publish(bool_msg)
+            self.line_detected_pub.publish(bool_msg)
         except cv_bridge.CvBridgeError as e:
             rospy.logerr(f"CvBridge Error: {e}")
 
 if __name__ == '__main__':
     # Create the ROS node
-    red_line_detector_node = RedLineDetector(node_name='red_line_detection_node')
+    line_detector_node = RedLineDetector(node_name='line_detection_node')
     
     # Keep the node running
     rospy.spin()

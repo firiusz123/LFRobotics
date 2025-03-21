@@ -16,7 +16,7 @@
 
     <include file="$(find image_processing)/launch/polyfit_node.launch" />
 
-    <include file="$(find image_processing)/launch/red_line_detection_node.launch"/>
+    <include file="$(find fsm)/launch/line_detection_node.launch"/>
 
     <!-- <include file="$(find poly_fit)/launch/polynomial_data_fitting.launch"> -->
     <!-- </include> -->
