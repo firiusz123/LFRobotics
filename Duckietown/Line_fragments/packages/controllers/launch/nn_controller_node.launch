@@ -1,0 +1,27 @@
+<launch>
+    <arg name="veh" value="$(env VEHICLE_NAME)" />
+    <arg name="pkg_name" value="controllers"/>
+    <arg name="node_name" default="nn_controller_node" />
+
+    <group ns="$(arg veh)">  
+
+        <!-- NN controller node -->
+        <node  name="$(arg node_name)" pkg="$(arg pkg_name)" type="$(arg node_name).py" required="true" output="screen">
+            
+            <!-- Subscribe image from camera -->
+            <remap from="~in/image/compressed" to="/$(arg veh)/camera_node/image/compressed" />
+            
+            <!-- Publish to car command topic -->
+            <remap from="~car_cmd" to="/$(arg veh)/car_cmd_switch_node/cmd" />
+
+            <!-- Publish image to debug subject -->
+            <remap from="~debug/image/compressed" to="/$(arg veh)/$(arg node_name)/debug/image/compressed" />
+
+            <!-- Load default values -->
+            <rosparam command="load" file="$(find controllers)/config/$(arg node_name)/default.yaml" />
+
+        </node>
+
+    </group>
+
+</launch>

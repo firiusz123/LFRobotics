@@ -1,0 +1,8 @@
+range : {
+  min : 0.05,
+  max : 1.2 
+}
+
+queue : 5
+
+alpha : 0.5

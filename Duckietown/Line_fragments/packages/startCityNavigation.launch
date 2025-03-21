@@ -1,0 +1,6 @@
+<launch>
+
+    <include file="$(find debugger)/startDebugger.launch" />
+    <include file="$(find fsm)/startFSM.launch" />
+
+</launch>

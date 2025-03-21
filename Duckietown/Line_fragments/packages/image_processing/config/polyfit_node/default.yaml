@@ -1,0 +1,14 @@
+
+follow_point : {
+  pointX: 0,
+  pointY: 380
+}
+
+normalizer : {
+  maxValue: 270,
+  minValue: -455
+}
+
+degree: 3
+
+buffer_size: 3

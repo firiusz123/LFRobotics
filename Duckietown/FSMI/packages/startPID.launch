@@ -1,0 +1,16 @@
+<launch>
+
+    <arg name="veh" value="$(env VEHICLE_NAME)" />
+    
+    <arg name="color_line" default="yellow" />
+
+    <include file="$(find line_detector)/launch/dashed_line_detection_node.launch">
+        <arg name="color_line" value="$(arg color_line)" />
+    </include>
+
+    <include file="$(find poly_fit)/launch/polynomial_data_fitting.launch">
+    </include>
+
+    <include file="$(find controllers)/launch/pid_controller_node.launch"/>
+
+</launch>

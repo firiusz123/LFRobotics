@@ -1,0 +1,22 @@
+# Image parameters like width and height
+image_param : {
+  width   : 640,
+  height  : 480
+}
+
+# Two lines of search are, top is 0.75% of height 
+# and bottom is greater 
+search_area : {
+  top     : 240,
+  bottom  : 590,
+  width_search : 400,
+  n: 120
+}
+centroid_search_method : {
+  # method = 0 finding contours by cv2
+  # method = 1 finding contours by slicing 
+  method : 0,
+  #threshold of moment of each contour 
+  centroid_lower_threshold: 20,
+  centroid_upper_threshold: 100000
+}

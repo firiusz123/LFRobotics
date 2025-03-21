@@ -1,0 +1,18 @@
+<launch>
+
+    <arg name="veh" default="$(env VEHICLE_NAME)" />
+    <arg name="pkg_name" default="image_processing"/>
+    <arg name="node_name" default="polyfit_node" />
+ 
+    <group ns="$(arg veh)">
+
+        <node  name="$(arg node_name)" pkg="$(arg pkg_name)" type="$(arg node_name).py" required="true" output="screen">
+            
+            <remap from="~image/centroids" to="/$(arg veh)/centroid_node/image/centroids" />
+            
+            <rosparam command="load" file="$(find image_processing)/config/$(arg node_name)/default.yaml" />
+
+        </node>
+    </group>
+
+</launch>

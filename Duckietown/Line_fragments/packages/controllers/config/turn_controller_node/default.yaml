@@ -1,0 +1,37 @@
+turn_parameters: {
+  v_max     : 0.7,
+  omega_max : 8,
+  steps     : 10
+}
+
+search_area : {
+  top     : 360,
+  bottom  : 400
+}
+
+turn_values: {
+  forward_speed: {
+    v           : 0.4,
+    omega       : 0,
+    time        : 4
+  },
+  left_turn: {
+    v           : 0.3,
+    radius      : 0.4,
+    time        : 3,
+    steps       : 3,
+    scale_factor: 2 
+  },
+  right_turn: {
+    v           : 0.2,
+    radius      : 0.3,
+    time        : 2,
+    steps       : 3,
+    scale_factor: 3
+  },
+  short_forward_speed: {
+    v           : 0.3,
+    omega       : 0,
+    time        : 1
+  }
+}

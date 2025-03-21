@@ -1,0 +1,83 @@
+# FOR REFERENCE CHECK https://github.com/duckietown/dt-core/
+
+
+initial_state: "LANE_FOLLOWING"
+
+events:
+  red_line_detected:
+    topic: "red_line_detection_node/red_line_detection" # Red line detection topic
+    msg_type: "BoolStamped"
+    trigger: True
+ 
+  resume_following: 
+    topic: "turn_controller_node/start_driving" # Red line detection topic
+    msg_type: "BoolStamped"
+    trigger: True
+
+  emergency_braking_on:
+    topic: "distance_controller_node/emergency_braking"
+    msg_type: "BoolStamped"
+    trigger: True
+
+  line_follower_on:
+    topic: "distance_controller_node/line_follower"
+    msg_type: "BoolStamped"
+    trigger: True
+  
+  adaptive_cruise_control_on:
+    topic: "distance_controller_node/adaptive_cruise_control"
+    msg_type: "BoolStamped"
+    trigger: True
+
+
+nodes: 
+  pid_controller_node     : "pid_controller_node/switch"
+  acc_controller_node     : "acc_controller_node/switch"
+  emergency_braking_node  : "emergency_braking_node/switch"
+  turn_controller_node    : "turn_controller_node/switch"
+
+global_transmissions:
+  emergency_braking_on : "EMERGENCY_BRAKING"
+
+states:
+  ADAPTIV_CRUISE_CONTROL:
+    transitions:
+      line_follower_on : "LANE_FOLLOWING"
+      # emergency_braking_on : "EMERGENCY_BRAKING"
+    active_nodes:
+      - acc_controller_node
+      - pid_controller_node
+    lights: "GREEN"
+    current_status: "implemented"
+    
+  PARKED:
+    activate_nodes:
+      - pid_controller_node
+    lights: "GREEN"
+    current_status: "implemented"
+    
+  LANE_FOLLOWING:
+    transitions:
+      adaptive_cruise_control_on : "ADAPTIV_CRUISE_CONTROL"
+      red_line_detected: "STOPPED"
+    active_nodes:
+      - pid_controller_node
+    lights: "CAR_DRIVING"
+    current_status: "implemented"
+    
+  STOPPED:
+    transitions:
+      resume_following: "LANE_FOLLOWING" 
+    active_nodes:
+      - turn_controller_node # Initally randomizes the turn and send the signal to move from place, publishes for turning_node to activate
+    lights: "RED"
+    current_status: "implemented"
+    
+  EMERGENCY_BRAKING:
+    transitions:
+      adaptive_cruise_control_on : "ADAPTIV_CRUISE_CONTROL"
+      line_follower_on : "LANE_FOLLOWING"
+    active_nodes:
+      - emergency_braking_node
+    lights: "RED"
+    current_status: "implemented"

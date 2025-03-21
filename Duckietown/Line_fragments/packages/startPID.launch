@@ -1,0 +1,26 @@
+<launch>
+
+    <arg name="veh" value="$(env VEHICLE_NAME)" />
+    
+    <arg name="color_follow_line" default="yellow" />
+
+    <!-- <include file="$(find line_detector)/launch/dashed_line_detection_node.launch">
+        <arg name="color_line" value="$(arg color_line)" />
+    </include> -->
+
+    <include file="$(find image_processing)/launch/binmask_node.launch">
+        <arg name="color_line" value="$(arg color_follow_line)" />
+    </include>
+
+    <include file="$(find image_processing)/launch/centroid_node.launch" />
+
+    <include file="$(find image_processing)/launch/polyfit_node.launch" />
+
+    <include file="$(find image_processing)/launch/red_line_detection_node.launch"/>
+
+    <!-- <include file="$(find poly_fit)/launch/polynomial_data_fitting.launch"> -->
+    <!-- </include> -->
+
+    <include file="$(find controllers)/launch/pid_controller_node.launch"/>
+
+</launch>

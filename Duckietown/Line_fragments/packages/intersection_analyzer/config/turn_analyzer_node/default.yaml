@@ -1,0 +1,30 @@
+# Image parameters like width and height
+image_param : {
+  width   : 640,
+  height  : 480
+}
+
+# Two lines of search are, top is 0.75% of height 
+# and bottom is greater 
+
+search_area : {
+  forward_search_area : {
+    top     : 180,
+    bottom  : 240,
+    threshold: 400
+  },
+    left_search_area: {
+    top: 200,
+    bottom: 350,
+    left: 0,
+    right: 100,
+    threshold: 1500
+    },
+  right_search_area: {
+    top: 180,
+    bottom: 310,
+    left: 300,
+    right: 560,
+    threshold: 1800
+  }
+}
