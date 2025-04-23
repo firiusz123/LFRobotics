@@ -1,6 +1,6 @@
 # parameters
-ARG REPO_NAME="Line_Fragmenter"
-ARG DESCRIPTION="Fragmented line detection"
+ARG REPO_NAME="Main"
+ARG DESCRIPTION="City navigation project"
 ARG MAINTAINER="Hbrt JM (hbrtmiklas@student.agh.edu.pl)"
 # pick an icon from: https://fontawesome.com/v4.7.0/icons/
 ARG ICON="cubes"

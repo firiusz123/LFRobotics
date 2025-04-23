@@ -1,7 +1,7 @@
 <launch>
 
     <arg name="veh" value="$(env VEHICLE_NAME)" />
-    <arg name="pkg_name" value="image_processing"/>
+    <arg name="pkg_name" value="local_image_processing"/>
     <arg name="node_name" default="binmask_node" />
 
     <arg name="color_line" default="yellow" doc="Line color"/>
@@ -12,9 +12,9 @@
             
             <remap from="~image/in/compressed" to="/$(arg veh)/camera_node/image/compressed" />
             
-            <rosparam command="load" file="$(find image_processing)/config/$(arg node_name)/default.yaml" />
+            <rosparam command="load" file="$(find local_image_processing)/config/$(arg node_name)/default.yaml" />
 
-            <rosparam command="load" file="$(find image_processing)/config/$(arg node_name)/color/$(arg color_line).yaml"/>
+            <rosparam command="load" file="$(find local_image_processing)/config/$(arg node_name)/color/$(arg color_line).yaml"/>
 
         </node>
     </group>

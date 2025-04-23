@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME="duckietown/line_fragments:latest-amd64"
+IMAGE_NAME="duckietown/main:latest-amd64"
 RUN_PATH="$(dirname -- "${BASH_SOURCE[0]}")"
 echo $RUN_PATH
 RED='\033[0;32m'
@@ -38,7 +38,7 @@ then
 
     # Start container
     docker run -itd --rm \
-        -v ${PWD}:/code/catkin_ws/src/Line_Fragmenter \
+        -v ${PWD}:/code/catkin_ws/src/Main \
         -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
    	-v /tmp/.X11-unix:/tmp/.X11-unix \
    	-v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
@@ -62,7 +62,7 @@ else
     # Start container
     docker run -itd --rm \
 	      -e ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH} \
-        -v ${PWD}:/code/catkin_ws/src/Line_Fragmenter \
+        -v ${PWD}:/code/catkin_ws/src/Main \
         --network host \
         ${IMAGE_NAME} \
 	/bin/bash
@@ -77,7 +77,7 @@ then
 
     # Start container
     docker run -it --rm \
-        -v ${PWD}:/code/catkin_ws/src/Line_Fragmenter \
+        -v ${PWD}:/code/catkin_ws/src/Main \
         -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
         -v /tmp/.X11-unix:/tmp/.X11-unix \
         -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
@@ -101,7 +101,7 @@ else
     # Start container
     docker run -it --rm \
               -e ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH} \
-        -v ${PWD}:/code/catkin_ws/src/Line_Fragmenter \
+        -v ${PWD}:/code/catkin_ws/src/Main \
         --network host \
         ${IMAGE_NAME} \
         /bin/bash

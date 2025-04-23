@@ -16,9 +16,9 @@
         <arg name="color_line" value="$(arg color_follow_line)" />
     </include>
 
-    <include file="$(find image_processing)/launch/centroid_node.launch" />
+    <include file="$(find local_image_processing)/launch/centroid_node.launch" />
 
-    <include file="$(find image_processing)/launch/polyfit_node.launch" />
+    <include file="$(find local_image_processing)/launch/polyfit_node.launch" />
 
     <include file="$(find fsm)/launch/line_detection_node.launch">
         <arg name="color_line" value="$(arg color_stop_line)"/>
