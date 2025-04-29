@@ -37,9 +37,7 @@ class DriveController(DTROS):
         self.pubs = { 
             topic :  rospy.Publisher('~' + str(topic), BoolStamped, queue_size=1) for topic in self.topics
         }
-        
-    ###
-
+       
     def callback(self, msg) -> None:
         
         try:
@@ -63,11 +61,10 @@ class DriveController(DTROS):
             # Publish events
             self.msg.header.stamp= rospy.Time.now()
             for key in self.pubs:
-                skibidi_or_not = '\t' if key != 'adaptive_cruise_control' else ''
-                # rospy.loginfo(f"{key}{skibidi_or_not}\t{self.topics[key]}")
+                acc_or_not = '\t' if key != 'adaptive_cruise_control' else ''
+                # rospy.loginfo(f"{key}{acc_or_not}\t{self.topics[key]}")
                 self.msg.data = self.topics[key]
                 self.pubs[key].publish(self.msg)
-
 
         except Exception as ex:
             rospy.logerr(ex)

@@ -30,8 +30,8 @@ turn_values: {
     scale_factor: 3
   },
   short_forward_speed: {
-    v           : 0.3,
+    v           : 0.1,
     omega       : 0,
-    time        : 1
+    time        : 3
   }
 }

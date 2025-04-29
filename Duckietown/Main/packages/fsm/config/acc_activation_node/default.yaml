@@ -1,0 +1,2 @@
+acc_activation_node_lower: 4.0
+acc_activation_node_upper: 10.0 # Unfortunately has to match the value of the stop activation node, otherwise unexpected behaviour may occur

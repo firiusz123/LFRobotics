@@ -21,6 +21,6 @@
     <!-- <include file="$(find poly_fit)/launch/polynomial_data_fitting.launch"> -->
     <!-- </include> -->
 
-    <include file="$(find controllers)/launch/pid_controller_node.launch"/>
+    <include file="$(find controllers)/launch/controller_node.launch"/>
 
 </launch>

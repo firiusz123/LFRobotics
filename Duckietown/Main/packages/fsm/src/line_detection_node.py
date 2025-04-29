@@ -5,7 +5,7 @@ import cv2
 import cv_bridge
 import numpy as np
 # from std_msgs.msg import Bool
-from duckietown_msgs.msg import BoolStamped
+from duckietown_msgs.msg import BoolStamped, Vector2D
 from sensor_msgs.msg import CompressedImage
 from duckietown.dtros import DTROS, DTParam, NodeType, ParamType
 
@@ -24,16 +24,20 @@ class LineDetector(DTROS):
         self.debug_out_image = None
 
         self.cvbridge = cv_bridge.CvBridge()
-        self.color_line_mask = {k: np.array(v) for k, v in self.color.value.items()}
+        self.color_line_mask    = {k: np.array(v) for k, v in self.color.value.items()}
 
-        self.line_detected_pub = rospy.Publisher('~line_detection', BoolStamped, queue_size=1)
+        self.line_detected_pub  = rospy.Publisher('~line_detection', BoolStamped, queue_size=1)
 
         # Subscribe to the image topic
-        self.sub_image = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
+        self.sub_image          = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
 
-        self.pub_image = rospy.Publisher('~line/image/out/compressed', CompressedImage, queue_size=1)
+        self.pub_image          = rospy.Publisher('~line/image/out/compressed', CompressedImage, queue_size=1)
 
-        self.cont_pub_image = rospy.Publisher('~center/image/out/compressed', CompressedImage, queue_size=1)
+        self.cont_image_pub     = rospy.Publisher('~center/image/out/compressed', CompressedImage, queue_size=1)
+
+        self.center_pub         = rospy.Publisher('~/' , Vector2D , queue_size=1)
+
+        self.desired_point_pub  = rospy.Publisher('~/', Vector2D, queue_size=1)
 
     # ============== Should be in a util file ==============
     def calculate_center(self,image):
@@ -44,7 +48,7 @@ class LineDetector(DTROS):
         _, thresh_image = cv2.threshold(grayscale_red, 0, 255, cv2.THRESH_BINARY)
         
         
-        self.cont_pub_image.publish(self.cvbridge.cv2_to_compressed_imgmsg(np.concatenate(([thresh_image]),axis=1), 'jpg'))
+        self.cont_image_pub.publish(self.cvbridge.cv2_to_compressed_imgmsg(np.concatenate(([thresh_image]),axis=1), 'jpg'))
 
         # Find contours of the object in the thresholded image
         contours, _ = cv2.findContours(thresh_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -67,8 +71,8 @@ class LineDetector(DTROS):
         else:
             return None
         return (cx,cy)
-    # ============== Should be in a util file ==============
     
+    # ============== Should be in a util file ==============
     def check_tolerance(self,point):
         if point is None:
             return False
@@ -86,13 +90,13 @@ class LineDetector(DTROS):
 
     def detected_line_using_result(self, result, threshold=0.1):
         # Convert the result to grayscale to count non-zero intensities
-        grayscaleRed = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
+        grayscaleImage = cv2.cvtColor(result, cv2.COLOR_BGR2GRAY)
 
         # Count the number of non-zero pixels
-        nonZeroPixels = np.count_nonzero(grayscaleRed)
+        nonZeroPixels = np.count_nonzero(grayscaleImage)
 
         # Calculate the total number of pixels in the image
-        totalPixels = grayscaleRed.size
+        totalPixels = grayscaleImage.size
 
         # Calculate the percentage of non-zero pixels (intensity detected)
         redPercentage = nonZeroPixels / totalPixels
@@ -152,10 +156,10 @@ class LineDetector(DTROS):
             self.line_detected_pub.publish(bool_msg)
         except cv_bridge.CvBridgeError as e:
             rospy.logerr(f"CvBridge Error: {e}")
-
+            
 if __name__ == '__main__':
     # Create the ROS node
-    line_detector_node = RedLineDetector(node_name='line_detection_node')
+    line_detector_node = LineDetector(node_name='line_detection_node')
     
     # Keep the node running
     rospy.spin()

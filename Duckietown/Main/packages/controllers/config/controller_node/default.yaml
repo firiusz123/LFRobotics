@@ -1,4 +1,4 @@
-v_max     : 0.4
+v_max     : 0.2
 omega_max : 5.0
 
 delta_t   : 0.033333333

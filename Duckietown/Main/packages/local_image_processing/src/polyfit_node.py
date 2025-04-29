@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 import rospy
 import cv2
 import cv_bridge
@@ -63,8 +62,8 @@ class Polyfit(DTROS):
         # Normalization values
         self.max = self.normalizer_param.value["maxValue"]
         self.min = self.normalizer_param.value["minValue"]
-        
-        
+
+
     def polyfit(self):
         def notNone(object):
             return object is not None
@@ -93,6 +92,9 @@ class Polyfit(DTROS):
                 if mag1 == 0 or mag2 == 0:
                     return 0  
                 angle_rad = np.arccos(dot / (mag1 * mag2))
+
+                # rospy.loginfo(f"anglerad {angle_rad}")
+                
                 angle_deg = np.degrees(angle_rad)
                 if angle_deg <= self.angle_treshold:
                     threshold_triggered = 1
@@ -114,8 +116,16 @@ class Polyfit(DTROS):
         def fit_poly():
             try:
                 np.seterr(all='ignore')  # Ignore warnings
-                poly = np.polyfit(x_points, y_points, poly_degree)
-                self.polyFunction = np.poly1d(poly)
+                # poly = np.polyfit(x_points, y_points, poly_degree)
+                cheb_poly = np.polynomial.chebyshev.Chebyshev.fit(x_points, y_points, 3, domain=[min(x_points), max(x_points)])
+
+                # Convert to standard polynomial
+                poly_standard = cheb_poly.convert(kind=np.polynomial.Polynomial)
+
+                # Create a numpy polynomial function
+                self.polyFunction = np.poly1d(poly_standard.coef[::-1])  # Reverse for np.poly1d
+
+                # self.polyFunction = np.poly1d(poly)
                 timeout_event.set()  # Mark the event as finished
             except Exception as e:
                 # rospy.loginfo(f"Centeres: {centers} x_points: {x_points} y_points: {y_points} Degree {poly_degree} ")
@@ -174,18 +184,15 @@ class Polyfit(DTROS):
     
     def callback(self, msg) -> None:
         try:       
-            # Read input image
-
-            # self.points = msg.data
-            
-            # Calculate centers of line strips
-
-            # DEBUG
+            # Get the points data, in a form of an array [(x_0,y_0), (x_1,y_1), ...]
             merged_points = msg.data
             x, y = merged_points[::2], merged_points[1::2]
             x, y = list(x),list(y)
             self.points = list(zip(merged_points[::2], merged_points[1::2]))
+            
+            # Fit the best curve through the points
             self.polyfit()
+
             if self.polyFunction == None or len(self.points) == 0 or self.points == None:
                 msg1 = Float32()
                 msg1.data = self.error['norm'] if self.error['norm'] != None else 0

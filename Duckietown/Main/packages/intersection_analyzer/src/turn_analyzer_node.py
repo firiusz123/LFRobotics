@@ -80,7 +80,8 @@ class TurnAnalyzer(DTROS):
         # Apply mask to image
         result_image = cv2.bitwise_and(cropped_img, cropped_img, mask=full_mask)
         
-        non_zero_pixels = cv2.countNonZero(result_image)
+        non_zero_pixels = cv2.countNonZero(full_mask)
+
         # non_zero_pixels = np.count_nonzero(result_image)
         # rospy.loginfo(f"{non_zero_pixels} {threshold}")
         if non_zero_pixels > threshold:

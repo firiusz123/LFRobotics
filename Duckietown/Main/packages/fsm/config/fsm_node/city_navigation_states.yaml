@@ -14,6 +14,11 @@ events:
     msg_type: "BoolStamped"
     trigger: True
 
+  intersection_adjustment:
+    topic: "nate/higgers"
+    msg_type: "BoolStamped"
+    trigger: True
+
   emergency_braking_on:
     topic: "distance_controller_node/emergency_braking"
     msg_type: "BoolStamped"
@@ -43,7 +48,6 @@ states:
   ADAPTIV_CRUISE_CONTROL:
     transitions:
       line_follower_on : "LANE_FOLLOWING"
-      # emergency_braking_on : "EMERGENCY_BRAKING"
     active_nodes:
       - acc_controller_node
       - pid_controller_node

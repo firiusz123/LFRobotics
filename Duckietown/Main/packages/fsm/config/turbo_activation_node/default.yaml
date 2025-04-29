@@ -1,0 +1,2 @@
+stop_activation_node_lower: 30.0
+stop_activation_node_upper: 1000.0 # Above max range

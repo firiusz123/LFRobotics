@@ -181,6 +181,7 @@ class TurningNode(DTROS):
             i += 1
             turn_number //= 2
         if len(options) == 0 or options is None:
+            self.go_forward_short()
             self.transmit_resume()
             return
         

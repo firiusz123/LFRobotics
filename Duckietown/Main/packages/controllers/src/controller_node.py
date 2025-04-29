@@ -22,8 +22,10 @@ class WrapperController(DTROS):
             node_type=NodeType.CONTROL
         )
         # Read controller parameters
-        # self.controler_param = DTParam('~pid_param', param_type=ParamType.DICT)
-        self.controler_param = DTParam('~lqr_param', param_type=ParamType.DICT)
+
+        # CHANGE THIS
+        self.controler_param = DTParam('~pid_param', param_type=ParamType.DICT)
+        # self.controler_param = DTParam('~lqr_param', param_type=ParamType.DICT)
 
         # Set maximum angular speed
         self.omega_param = DTParam('~omega_max', param_type=ParamType.FLOAT)
@@ -44,9 +46,10 @@ class WrapperController(DTROS):
         self.v_sub = rospy.Subscriber('~v', Float32, self.v_callback, queue_size=1)
 
 
+        # CHANGE THIS
         # Create controller
-        # self.controller = PIDController()
-        self.controller = LQRController()
+        self.controller = PIDController()
+        # self.controller = LQRController()
         
         # Subscribe to error topic
         self.error_sub = rospy.Subscriber('~error', Float32, self.callback, queue_size=1)
@@ -56,10 +59,6 @@ class WrapperController(DTROS):
 
         # Publishers
         self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
-    
-        self.publisher_2 = rospy.Publisher('~controller_node', Twist2DStamped, queue_size=1)
-    
-
 
     def P_callback(self,msg):
         self.Kp = msg.data
@@ -81,7 +80,7 @@ class WrapperController(DTROS):
 
             # Compute controll
             pd_value,error,e_int = self.controller.run(0.0, msg.data, self.delta_t.value)
-            pd_value = -pd_value
+            pd_value = pd_value
             # Scalling output form controller
             self.twist.omega = self.omega_max * pd_value
             
@@ -91,7 +90,6 @@ class WrapperController(DTROS):
 
             self.twist.header.stamp = rospy.Time.now()
             self.control_pub.publish(self.twist)
-            self.publisher_2.publish(self.twist)
             # rospy.loginfo(f"Should publish {self.twist.omega} {self.twist.v}")
 
         except Exception as e:
@@ -105,12 +103,18 @@ class WrapperController(DTROS):
 
     def on_shutdown(self):
         # Send stop command
-        self.twist.header.stamp = rospy.Time.now()
         self.twist.omega = 0
         self.twist.v = 0
         rospy.Rate(100)
-        for _ in range(1000):
+        temp_twist = Twist2DStamped()
+        for i in range(1000):
+            self.twist.header.stamp = rospy.Time.now()
             self.control_pub.publish(self.twist)
+            if i == 500:
+                temp_twist.omega = 0.01
+                temp_twist.v = 0
+                temp_twist.header.stamp = rospy.Time.now()
+                self.control_pub.publish(temp_twist)
         rospy.sleep(2)
         rospy.loginfo("Stop Controller")
     

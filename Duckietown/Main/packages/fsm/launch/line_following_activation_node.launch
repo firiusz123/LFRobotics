@@ -1,0 +1,23 @@
+<launch>
+
+    <arg name="veh" value="$(env VEHICLE_NAME)" />
+    <arg name="pkg_name" value="fsm"/>
+    <arg name="node_name" default="acc_activation_node" />
+    
+    <group ns="$(arg veh)">
+
+        <node  name="$(arg node_name)" pkg="$(arg pkg_name)" type="$(arg node_name).py" required="true" output="screen">
+            
+            <!-- Provided by the sensing node --> 
+            <remap from="~in" to="/$(arg veh)/filter_node/range/median" />
+            
+            <!-- Load default values -->
+            <rosparam command="load" file="$(find fsm)/config/$(arg node_name)/default.yaml" />
+
+            <!-- Color filter load-->
+            <rosparam command="load" file="$(find fsm)/config/$(arg node_name)/color/$(arg color_line).yaml"/>
+
+        </node>
+    </group>
+
+</launch>

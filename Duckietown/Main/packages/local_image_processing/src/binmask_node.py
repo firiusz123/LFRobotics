@@ -25,9 +25,6 @@ class Binmask(DTROS):
             node_type=NodeType.PERCEPTION
         )
         
-        
-        
-        
         # Read color mask  
         self.color = DTParam('~color', param_type=ParamType.DICT)
 
@@ -45,8 +42,6 @@ class Binmask(DTROS):
         
         self.cvbridge = cv_bridge.CvBridge()
         
-        
-
         # Publishers
         self.pub_mask = rospy.Publisher('~image/mask/compressed',CompressedImage,queue_size = 1)
 
@@ -63,11 +58,6 @@ class Binmask(DTROS):
         # rospy.loginfo("Normalize factor: {0}".format(self.normalize_factor))
         # rospy.loginfo("Follow line color: {0}".format( self.color.value['name'] ))
 
-
-
-
-
-    
     def callback(self, msg) -> None:
         try:           
             # Read input image

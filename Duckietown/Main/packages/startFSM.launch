@@ -35,7 +35,7 @@
     <!-- START Control nodes -->
 
     <!-- PID Node -->
-    <include file="$(find controllers)/launch/pid_controller_node.launch"/>
+    <include file="$(find controllers)/launch/controller_node.launch"/>
     
     <!-- Acc Node -->
     <include file="$(find controllers)/launch/acc_controller_node.launch"/>
