@@ -27,20 +27,15 @@ class EmergencyBraking(DTROS):
         self.subscriber = rospy.Subscriber('~in', Float32, self.callback, queue_size=1)
 
         # # Construct publisher
-        self.control_pub = rospy.Publisher('~cmd', Twist2DStamped, queue_size=1)
-
-    ###
+        self.pub_control = rospy.Publisher('~cmd', Twist2DStamped, queue_size=1)
 
     def callback(self, msg) -> None:
         try:
             if msg.data<self.distance.value :
-                self.control_pub.publish(Twist2DStamped(omega=0.0, v=0.0))
+                self.pub_control.publish(Twist2DStamped(omega=0.0, v=0.0))
 
         except Exception as ex:
             rospy.logerr(ex)
-
-    ### 
-
 
     def on_switch_on(self):
         rospy.loginfo("Emergency breaking node switched from off to on")

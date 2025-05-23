@@ -30,7 +30,7 @@ class ACCControler(DTROS):
         self.subscriber = rospy.Subscriber('~in', Float32, self.callback, queue_size=1)
 
         # Publish v
-        self.v_pub = rospy.Publisher('~v', Float32, queue_size=1)
+        self.pub_v = rospy.Publisher('~v', Float32, queue_size=1)
 
 
     def callback(self, msg) -> None:
@@ -44,7 +44,7 @@ class ACCControler(DTROS):
             elif self.v_acc.data>self.v.value['max'] :
                 self.v_acc.data=self.v.value['max']
 
-            self.v_pub.publish(self.v_acc)
+            self.pub_v.publish(self.v_acc)
             # rospy.loginfo(self.v_acc.data)
 
         except Exception as ex:

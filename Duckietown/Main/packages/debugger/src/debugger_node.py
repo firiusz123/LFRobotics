@@ -52,7 +52,7 @@ class Debugger(DTROS):
         self.cvbridge = cv_bridge.CvBridge()
 
         # Transformed image
-        self.debug_img_pub = rospy.Publisher('~image/debugger_out/out/compressed', CompressedImage, queue_size=1)
+        self.pub_debug_img = rospy.Publisher('~image/debugger_out/out/compressed', CompressedImage, queue_size=1)
 
         
 
@@ -226,7 +226,7 @@ class Debugger(DTROS):
             
             # Publish transformed image
 
-            self.debug_img_pub.publish(debug_out_image)
+            self.pub_debug_img.publish(debug_out_image)
             # rospy.loginfo("debbuger callback triggered")
 
         except cv_bridge.CvBridgeError as e:

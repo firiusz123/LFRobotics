@@ -23,8 +23,10 @@ class WrapperController(DTROS):
         )
         # Read controller parameters
 
-        # CHANGE THIS
+        # Base parameters for PID
         self.controler_param = DTParam('~pid_param', param_type=ParamType.DICT)
+        
+        # Base parameters for LQR tuning
         # self.controler_param = DTParam('~lqr_param', param_type=ParamType.DICT)
 
         # Set maximum angular speed
@@ -43,22 +45,21 @@ class WrapperController(DTROS):
 
         self.sub_fsm_mode = rospy.Subscriber("fsm_node/mode",FSMState, self.cbFSMMode, queue_size=1) 
 
-        self.v_sub = rospy.Subscriber('~v', Float32, self.v_callback, queue_size=1)
+        self.sub_v = rospy.Subscriber('~v', Float32, self.v_callback, queue_size=1)
 
-
-        # CHANGE THIS
+        # Uncomment the controller and matching parameters, 
         # Create controller
         self.controller = PIDController()
         # self.controller = LQRController()
         
         # Subscribe to error topic
-        self.error_sub = rospy.Subscriber('~error', Float32, self.callback, queue_size=1)
+        self.sub_error = rospy.Subscriber('~error', Float32, self.callback, queue_size=1)
     
         # Message to publish
         self.twist = Twist2DStamped()
 
         # Publishers
-        self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
+        self.pub_control = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
 
     def P_callback(self,msg):
         self.Kp = msg.data
@@ -89,7 +90,7 @@ class WrapperController(DTROS):
             # self.twist.omega = self.omega_max.value * pd_value
 
             self.twist.header.stamp = rospy.Time.now()
-            self.control_pub.publish(self.twist)
+            self.pub_control.publish(self.twist)
             # rospy.loginfo(f"Should publish {self.twist.omega} {self.twist.v}")
 
         except Exception as e:
@@ -109,12 +110,12 @@ class WrapperController(DTROS):
         temp_twist = Twist2DStamped()
         for i in range(1000):
             self.twist.header.stamp = rospy.Time.now()
-            self.control_pub.publish(self.twist)
+            self.pub_control.publish(self.twist)
             if i == 500:
                 temp_twist.omega = 0.01
                 temp_twist.v = 0
                 temp_twist.header.stamp = rospy.Time.now()
-                self.control_pub.publish(temp_twist)
+                self.pub_control.publish(temp_twist)
         rospy.sleep(2)
         rospy.loginfo("Stop Controller")
     
@@ -128,13 +129,11 @@ class WrapperController(DTROS):
             self.twist.v = self.v_max
             self.twist.omega = self.omega_max
             self.twist.header.stamp = rospy.Time.now()
-            self.control_pub.publish(self.twist)
+            self.pub_control.publish(self.twist)
 
     def v_callback(self, msg) -> None:
         # rospy.loginfo(f"Changing cruise value to {msg.data}")
         self.v_max = msg.data
-
-###################################################################################
 
 if __name__ == '__main__':
     some_name_node = WrapperController(node_name='controller_node')

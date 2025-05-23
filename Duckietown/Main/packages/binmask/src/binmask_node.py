@@ -1,22 +1,18 @@
 #!/usr/bin/env python3
 
-import rospy
+import rospy # type: ignore
 import cv2
-import cv_bridge
+import cv_bridge # type: ignore
 import threading
 import numpy as np
 from math import sqrt
 
 # import DTROS-related classes
-from duckietown.dtros import \
-    DTROS, \
-    DTParam, \
-    NodeType, \
-    ParamType
+from duckietown.dtros import DTROS, DTParam, NodeType, ParamType # type: ignore
 
-# import messages and services
-from sensor_msgs.msg import CompressedImage
-from std_msgs.msg import Int8MultiArray,MultiArrayDimension
+# import messages and services 
+from sensor_msgs.msg import CompressedImage # type: ignore
+from std_msgs.msg import Int8MultiArray,MultiArrayDimension # type: ignore
 
 class Binmask(DTROS):
     def __init__(self, node_name):

@@ -36,13 +36,15 @@ then
     # Set enviromental varaibles
     source "${RUN_PATH}/set_env.sh" ${LAST_ARG}
 
+    xhost +
+
     # Start container
     docker run -itd --rm \
         -v ${PWD}:/code/catkin_ws/src/Main \
         -v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
    	-v /tmp/.X11-unix:/tmp/.X11-unix \
    	-v /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket \
-    	-e DISPLAY=unix$DISPLAY \
+    	-e DISPLAY=$DISPLAY \
         --network host \
         --privileged \
         --runtime=nvidia \

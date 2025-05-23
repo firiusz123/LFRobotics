@@ -39,7 +39,7 @@ class AntiInstagramNode(DTROS):
         )
 
         # Construct subscriber
-        self.uncorrected_image_subscriber = rospy.Subscriber(
+        self.sub_uncorrected_imagescriber = rospy.Subscriber(
             "~uncorrected_image/compressed",
             CompressedImage,
             self.store_image_msg,

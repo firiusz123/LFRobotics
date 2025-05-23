@@ -2,7 +2,7 @@
 
 from distance_activation_node import DistanceActivationNode 
 
-import rospy
+import rospy # type: ignore
 
 class StopActivationNode(DistanceActivationNode):
     def __init__(self, nodeName):

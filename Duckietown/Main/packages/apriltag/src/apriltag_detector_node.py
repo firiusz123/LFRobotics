@@ -58,23 +58,23 @@ class AprilTagDetector(DTROS):
         # create a CV bridge object
         self._jpeg = TurboJPEG()
         # create subscribers
-        self._img_sub = rospy.Subscriber(
+        self.sub__img = rospy.Subscriber(
             "~image", CompressedImage, self._img_cb, queue_size=1, buff_size="20MB"
             # "/d2/camera_node/image/compressed", CompressedImage, self._img_cb, queue_size=1, buff_size="20MB"
         )
-        self._cinfo_sub = rospy.Subscriber(
+        self.sub__cinfo = rospy.Subscriber(
             "~camera_info", CameraInfo, self._cinfo_cb, queue_size=1
             # "/d2/camera_node/camera_info", CameraInfo, self._cinfo_cb, queue_size=1
             )
         # create publisher
-        self._tag_pub = rospy.Publisher(
+        self.pub__tag = rospy.Publisher(
             "~detections",
             AprilTagDetectionArray,
             queue_size=1,
             dt_topic_type=TopicType.PERCEPTION,
             dt_help="Tag detections",
         )
-        self._img_pub = rospy.Publisher(
+        self.pub__img = rospy.Publisher(
             "~detections/image/compressed",
             CompressedImage,
             queue_size=1,
@@ -114,7 +114,7 @@ class AprilTagDetector(DTROS):
         self.loginfo("Camera info message received. Unsubscribing from camera_info topic.")
         # noinspection PyBroadException
         try:
-            self._cinfo_sub.shutdown()
+            self.sub__cinfo.shutdown()
         except BaseException:
             pass
 
@@ -162,12 +162,12 @@ class AprilTagDetector(DTROS):
                 msg.header.frame_id,
             )
         # publish detections
-        self._tag_pub.publish(tags_msg)
+        self.pub__tag.publish(tags_msg)
         # update healthy frequency metadata
-        self._tag_pub.set_healthy_freq(self._img_sub.get_frequency())
-        self._img_pub.set_healthy_freq(self._img_sub.get_frequency())
+        self.pub_sub__tag.set_healthy_freq(self._img.get_frequency())
+        self.pub_sub__img.set_healthy_freq(self._img.get_frequency())
         # render visualization (if needed)
-        if self._img_pub.anybody_listening() and not self._renderer_busy:
+        if self.pub__img.anybody_listening() and not self._renderer_busy:
             self._renderer_busy = True
             Thread(target=self._render_detections, args=(msg, img, tags)).start()
 
@@ -179,7 +179,7 @@ class AprilTagDetector(DTROS):
         if self._mapx is None or self._mapy is None:
             return
         # make sure somebody wants this
-        if (not self._img_pub.anybody_listening()) and (not self._tag_pub.anybody_listening()):
+        if (not self.pub__img_pub.anybody_listening()) and (not self._tag.anybody_listening()):
             return
         # make sure this is a good time to detect (always keep this as last check)
         if not self._detection_reminder.is_time(frequency=self.detection_freq.value):
@@ -224,7 +224,7 @@ class AprilTagDetector(DTROS):
             img_msg.format = "jpeg"
             img_msg.data = self._jpeg.encode(img)
         # ---
-        self._img_pub.publish(img_msg)
+        self.pub__img.publish(img_msg)
         self._renderer_busy = False
 
 

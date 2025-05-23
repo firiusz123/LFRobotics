@@ -8,8 +8,10 @@ from duckietown.dtros import \
     NodeType, \
     ParamType
 
+import time
+
 from std_msgs.msg import Float32
-from duckietown_msgs.msg import Twist2DStamped, FSMState
+from duckietown_msgs.msg import Twist2DStamped, Vector2D
 
 from pid_controller import PIDController
 from lqr_controller import LQRController
@@ -35,73 +37,58 @@ class WrapperController(DTROS):
         self.v_max = self.v_max_param.value
         # Set maximum linear speed
         self.delta_t = DTParam('~delta_t', param_type=ParamType.FLOAT)
-
         self.adjustment_time = DTParam('~adjustment', param_type=ParamType.FLOAT)
 
-        # To extract the values we use self.desired_point["x"] or self.desired_point["y"]
-        self.desired_point = DTParam('~desired_point', ParamType=ParamType.DICT)
+        # Internal timer
+        self.adjustment_start_time = None
+        self.adjustment_done = False
 
-        # Controller variables
-        self.prev_e = 0.0
-        self.prev_int = 0.0
-
-        # CHANGE THIS
-        # Create controller
-        self.controller = PIDController()
-        # self.controller = LQRController()
-        
-        # Subscribe to error topic
+        # Subscribe to the desired point
         self.real_point = rospy.Subscriber('~desired_point', Vector2D, self.callback, queue_size=1)
 
-        # Message to publish
-        self.twist = Twist2DStamped()
-
         # Publishers
-        self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
-
-
-    
-    def P_callback(self,msg):
-        self.Kp = msg.data
-    
-    def I_callback(self,msg):
-        self.Ki = msg.data
-
-    def D_callback(self,msg):
-        self.Kd = msg.data 
-
+        self.pub_control = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
 
     def callback(self, msg) -> None:
-        # rospy.loginfo(f"Running callback with error {msg.data}")
         try:
+            if self.adjustment_done:
+                return
 
-            # TODO - Adjust the distance from the center of the red line to the desired position
+            # Start timing on first callback
+            if self.adjustment_start_time is None:
+                self.adjustment_start_time = time.time()
 
-            # # Set controller paramters (can by changed during tune process)
-            # self.controler_param.force_update()
-            # self.controller.set_param(self.controler_param.value)
+            elapsed = time.time() - self.adjustment_start_time
+            if elapsed > self.adjustment_time.value:
+                rospy.loginfo("Adjustment time completed.")
+                self.adjustment_done = True
+                self.publish_zero_command()
+                return
 
-            # # Compute controll
-            # pd_value,error,e_int = self.controller.run(0.0, msg.data, self.delta_t.value)
-            # pd_value = pd_value
-            # # Scalling output form controller
-            # self.twist.omega = self.omega_max * pd_value
-            
-            # # rospy.loginfo(pd_value)
-            # self.twist.v = self.v_max
-            # # self.twist.omega = self.omega_max.value * pd_value
+            # Get current error (assume position x for simplicity)
+            target_x = self.desired_point["x"]
+            error = target_x - msg.x
 
-            # self.twist.header.stamp = rospy.Time.now()
-            # self.control_pub.publish(self.twist)
-            # self.publisher_2.publish(self.twist)
-            # # rospy.loginfo(f"Should publish {self.twist.omega} {self.twist.v}")
+            # Update PID controller params if needed
+            self.controler_param.force_update()
+            self.controller.set_param(self.controler_param.value)
+
+            # Run controller
+            control_signal, _, _ = self.controller.run(0.0, error, self.delta_t.value)
+
+            # Clamp omega to max
+            omega = max(-1.0, min(1.0, control_signal))
+            self.twist.omega = omega * self.omega_max.value
+            self.twist.v = self.v_max.value
+
+            self.twist.header.stamp = rospy.Time.now()
+            self.pub_control.publish(self.twist)
 
         except Exception as e:
-            rospy.logerr("Error: {0}".format(e))
+            rospy.logerr("Error in callback: {0}".format(e))
 
-    def on_switch_on(self):
-        rospy.loginfo("Position adjustment controller switched from off to on")
-
-if __name__ == '__main__':
-    some_name_node = WrapperController(node_name='controller_node')
-    rospy.spin()
+    def publish_zero_command(self):
+        self.twist.omega = 0.0
+        self.twist.v = 0.0
+        self.twist.header.stamp = rospy.Time.now()
+        self.pub_control.publish(self.twist)

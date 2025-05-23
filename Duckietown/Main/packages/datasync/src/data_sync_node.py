@@ -21,15 +21,15 @@ class DataSync(DTROS):
         )
 
         # Subscribe to input image topic
-        self.image_sub  = message_filters.Subscriber('~in/image/compressed', CompressedImage)
+        self.sub_image  = message_filters.Subscriber('~in/image/compressed', CompressedImage)
         self.car_cmd    = message_filters.Subscriber('~in/car_cmd', Twist2DStamped)
 
         # Publisher
-        self.image_pub = rospy.Publisher('~out/image/compressed', CompressedImage, queue_size=1)
-        self.car_cmd_pub = rospy.Publisher('~out/car_cmd', Twist2DStamped, queue_size=1)
+        self.pub_image = rospy.Publisher('~out/image/compressed', CompressedImage, queue_size=1)
+        self.pub_car_cmd = rospy.Publisher('~out/car_cmd', Twist2DStamped, queue_size=1)
 
         # TimeSynchronizer
-        self.ts = message_filters.ApproximateTimeSynchronizer([self.image_sub, self.car_cmd], 
+        self.sub_ts = message_filters.ApproximateTimeSynchronizer([self.image, self.car_cmd], 
             slop = 1, 
             queue_size=10)
 
@@ -41,8 +41,8 @@ class DataSync(DTROS):
         msg_car_cmd.header.stamp = msg_image.header.stamp
         
         # Publish synchronised messages
-        self.image_pub.publish(msg_image)
-        self.car_cmd_pub.publish(msg_car_cmd)
+        self.pub_image.publish(msg_image)
+        self.pub_car_cmd.publish(msg_car_cmd)
 
 
 ###################################################################################

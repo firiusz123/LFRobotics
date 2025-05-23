@@ -47,10 +47,10 @@ class NNController(DTROS):
         self.cvbridge = cv_bridge.CvBridge()
 
         # Subscribe to image topic
-        self.image_sub = rospy.Subscriber('~in/image/compressed', CompressedImage, self.callback, queue_size=1)
+        self.sub_image = rospy.Subscriber('~in/image/compressed', CompressedImage, self.callback, queue_size=1)
         
         # Publishers
-        self.control_pub = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
+        self.pub_control = rospy.Publisher('~car_cmd', Twist2DStamped, queue_size=1)
         self.pub_debug_img = rospy.Publisher('~debug/image/compressed', CompressedImage, queue_size=1)
     
 
@@ -60,7 +60,7 @@ class NNController(DTROS):
 
         self.twist = Twist2DStamped()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = torch.load('/code/catkin_ws/src/DTF/packages/controllers/config/skillissue2.pth' , weights_only=False)
+        self.model = torch.load('/code/catkin_ws/src/Main/packages/controllers/config/skillissue2.pth' , weights_only=False)
         self.model.to(self.device)
         self.model.eval()
         # Message to publish
@@ -76,20 +76,6 @@ class NNController(DTROS):
             # Crop image
             # image = img_org[self.image_crop.value['start']:self.image_crop.value['stop'], :, :]
             image = img_org
-            # Filter image
-            # B - Place your code here.
-
-            # C - Place your code here
-
-            # Resize image
-            # D - Place your code here
-            
-            # Normalize image for NN  
-            # E - Place your code here
-
-            # Predict controll omega
-            # F - Place your code here
-
             # Convert the image to a PyTorch tensor (with proper channels)
             image_tensor = torch.from_numpy(image).float()
 
@@ -115,7 +101,7 @@ class NNController(DTROS):
             self.twist.header.stamp = rospy.Time.now()
             
             # Publish control
-            self.control_pub.publish(self.twist)
+            self.pub_control.publish(self.twist)
             
             # DEBUG
             if self.pub_debug_img.anybody_listening():
@@ -141,11 +127,11 @@ class NNController(DTROS):
     def on_shutdown(self):
         # Send stop command
         for _ in range(10000):
-            self.control_pub.publish(Twist2DStamped(omega=0.0, v=0.0))
+            self.pub_control.publish(Twist2DStamped(omega=0.0, v=0.0))
         rospy.sleep(1)
-        self.control_pub.publish(Twist2DStamped(omega=0.0, v=0.0))
+        self.pub_control.publish(Twist2DStamped(omega=0.0, v=0.0))
         rospy.sleep(1)
-        self.control_pub.publish(Twist2DStamped(omega=0.0, v=0.0))
+        self.pub_control.publish(Twist2DStamped(omega=0.0, v=0.0))
         # Wait....
         rospy.sleep(1)
         rospy.loginfo("Stop NN controller")

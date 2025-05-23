@@ -23,7 +23,7 @@ class ImageViewer:
         self.image_label_filtered.pack(side="right")
 
         # Set up the ROS subscriber for the compressed image topic
-        self.image_sub = rospy.Subscriber("/d3/camera_node/image/compressed", CompressedImage, self.image_callback)
+        self.sub_image = rospy.Subscriber("/d3/camera_node/image/compressed", CompressedImage, self.image_callback)
 
         # Frame for sliders
         slider_frame = Frame(self.root)

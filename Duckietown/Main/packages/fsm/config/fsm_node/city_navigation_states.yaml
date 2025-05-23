@@ -15,7 +15,7 @@ events:
     trigger: True
 
   intersection_adjustment:
-    topic: "nate/higgers"
+    topic: "temp/hemp"
     msg_type: "BoolStamped"
     trigger: True
 
@@ -36,7 +36,7 @@ events:
 
 
 nodes: 
-  pid_controller_node     : "pid_controller_node/switch"
+  pid_controller_node     : "controller_node/switch"
   acc_controller_node     : "acc_controller_node/switch"
   emergency_braking_node  : "emergency_braking_node/switch"
   turn_controller_node    : "turn_controller_node/switch"

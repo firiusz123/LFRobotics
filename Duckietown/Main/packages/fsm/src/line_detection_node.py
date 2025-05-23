@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
-import rospy
-import cv2
-import cv_bridge
-import numpy as np
+import rospy # type: ignore
+import cv2 # type: ignore
+import cv_bridge # type: ignore
+import numpy as np # type: ignore
+
 # from std_msgs.msg import Bool
-from duckietown_msgs.msg import BoolStamped, Vector2D
-from sensor_msgs.msg import CompressedImage
-from duckietown.dtros import DTROS, DTParam, NodeType, ParamType
+
+from duckietown_msgs.msg import BoolStamped, Vector2D # type: ignore
+from sensor_msgs.msg import CompressedImage # type: ignore
+from duckietown.dtros import DTROS, DTParam, NodeType, ParamType # type: ignore
 
 class LineDetector(DTROS):
     def __init__(self, node_name):
@@ -26,18 +28,22 @@ class LineDetector(DTROS):
         self.cvbridge = cv_bridge.CvBridge()
         self.color_line_mask    = {k: np.array(v) for k, v in self.color.value.items()}
 
-        self.line_detected_pub  = rospy.Publisher('~line_detection', BoolStamped, queue_size=1)
+        self.pub_line_detected  = rospy.Publisher('~line_detection', BoolStamped, queue_size=1)
 
         # Subscribe to the image topic
         self.sub_image          = rospy.Subscriber('~image/in/compressed', CompressedImage, self.callback, queue_size=1)
 
+        # Masked image publication for debugging
         self.pub_image          = rospy.Publisher('~line/image/out/compressed', CompressedImage, queue_size=1)
 
-        self.cont_image_pub     = rospy.Publisher('~center/image/out/compressed', CompressedImage, queue_size=1)
+        # Masked image publication with contour center and tolerance circle
+        self.pub_cont_image     = rospy.Publisher('~center/image/out/compressed', CompressedImage, queue_size=1)
 
-        self.center_pub         = rospy.Publisher('~/' , Vector2D , queue_size=1)
+        # Center of the contour position publication
+        self.pub_center         = rospy.Publisher('~center/actual' , Vector2D , queue_size=1)
 
-        self.desired_point_pub  = rospy.Publisher('~/', Vector2D, queue_size=1)
+        # Desired point publication
+        self.pub_desired_point  = rospy.Publisher('~/center/desired', Vector2D, queue_size=1)
 
     # ============== Should be in a util file ==============
     def calculate_center(self,image):
@@ -48,7 +54,7 @@ class LineDetector(DTROS):
         _, thresh_image = cv2.threshold(grayscale_red, 0, 255, cv2.THRESH_BINARY)
         
         
-        self.cont_image_pub.publish(self.cvbridge.cv2_to_compressed_imgmsg(np.concatenate(([thresh_image]),axis=1), 'jpg'))
+        self.pub_cont_image.publish(self.cvbridge.cv2_to_compressed_imgmsg(np.concatenate(([thresh_image]),axis=1), 'jpg'))
 
         # Find contours of the object in the thresholded image
         contours, _ = cv2.findContours(thresh_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -153,7 +159,7 @@ class LineDetector(DTROS):
             self.debug_out_image.header.stamp = rospy.Time.now()
             self.pub_image.publish(self.debug_out_image)
             # Publish the result
-            self.line_detected_pub.publish(bool_msg)
+            self.pub_line_detected.publish(bool_msg)
         except cv_bridge.CvBridgeError as e:
             rospy.logerr(f"CvBridge Error: {e}")
             

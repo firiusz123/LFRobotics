@@ -9,7 +9,7 @@ class ImageSubscriber:
         # Initialize the ROS node
         rospy.init_node('image_display_node', anonymous=True)
         # Subscribe to the compressed image topic
-        self.image_sub = rospy.Subscriber("/d3/camera_node/image/compressed", CompressedImage, self.image_callback)
+        self.sub_image = rospy.Subscriber("/d3/camera_node/image/compressed", CompressedImage, self.image_callback)
     
     def image_callback(self, data):
         try:

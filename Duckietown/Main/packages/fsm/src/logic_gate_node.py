@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-import rospy
-from duckietown_msgs.msg import AprilTagsWithInfos, BoolStamped, Twist2DStamped
-from std_msgs.msg import Float32, UInt8
+import rospy # type: ignore
+from duckietown_msgs.msg import AprilTagsWithInfos, BoolStamped, Twist2DStamped # type: ignore
+from std_msgs.msg import Float32, UInt8 # type: ignore
 
 classes = {
     "BoolStamped": BoolStamped,
@@ -34,7 +34,7 @@ class LogicGateNode:
         self.pub_dict = dict()
         self.event_msg_dict = dict()
         self.event_trigger_dict = dict()
-        self.last_published_msg = None
+        self.pub_lastlished_msg = None
         for gate_name, gate_dict in list(self.gates_dict.items()):
             output_topic_name = gate_dict["output_topic"]
             self.pub_dict[gate_name] = rospy.Publisher(output_topic_name, BoolStamped, queue_size=1)

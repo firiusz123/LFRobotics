@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import copy
 
-import rospy
-from duckietown_msgs.msg import BoolStamped, FSMState
-from duckietown_msgs.srv import SetFSMState, SetFSMStateResponse, ChangePattern
-from std_srvs.srv import SetBool
-from std_msgs.msg import String
+import rospy # type: ignore
+from duckietown_msgs.msg import BoolStamped, FSMState # type: ignore
+from duckietown_msgs.srv import SetFSMState, SetFSMStateResponse, ChangePattern # type: ignore
+from std_srvs.srv import SetBool # type: ignore
+from std_msgs.msg import String # type: ignore
 
 
 class FSMNode:

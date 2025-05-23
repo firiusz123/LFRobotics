@@ -17,10 +17,10 @@ class StopNode(DTROS):
         self.turn_control = Twist2DStamped()
 
         # Subscriber to receive stop commands
-        self.stop_subscriber = rospy.Subscriber("~stop_topic", BoolStamped, self.stop_callback, queue_size=1)
+        self.sub_stopscriber = rospy.Subscriber("~stop_topic", BoolStamped, self.stop_callback, queue_size=1)
 
         # Publisher to send control messages
-        self.resume_pub = rospy.Publisher("~resume_topic", BoolStamped, queue_size=1)
+        self.pub_resume = rospy.Publisher("~resume_topic", BoolStamped, queue_size=1)
 
         # Service to enable stopping for a given duration
         self.stop_service = rospy.Service("~stop_for_duration", Float32, self.stop_service_callback)
@@ -42,10 +42,10 @@ class StopNode(DTROS):
         self.turn_control.header.stamp = rospy.Time.now()
         self.turn_control.v = 0
         self.turn_control.omega = 0
-        self.resume_pub.publish(BoolStamped(data=False))  # Optionally indicate stopping
+        self.pub_resume.publish(BoolStamped(data=False))  # Optionally indicate stopping
 
         # Publish the stop message
-        self.control_pub.publish(self.turn_control)
+        self.pub_control.publish(self.turn_control)
 
     def timeout(self):
         """
@@ -62,7 +62,7 @@ class StopNode(DTROS):
         self.turn_control.omega = 0.0  # You can set a default angular velocity
         
         self.turn_control = rospy.Time.now() 
-        self.control_pub.publish(self.turn_control)
+        self.pub_control.publish(self.turn_control)
         rospy.loginfo("Resuming movement")
 
     def stop_service_callback(self, req):
