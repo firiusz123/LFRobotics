@@ -105,7 +105,7 @@ class Centroids(DTROS):
         k = self.searchArea.value['width_search']
         cropped_image = img[: , 0:k]
         
-        # grayImage = cv2.cvtColor(cropped_image, cv2.COLOR_HSV2BGR)
+        # Convert to grayscale
         grayImage = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
 
         # Apply binary threshold
@@ -140,8 +140,6 @@ class Centroids(DTROS):
                 # Read input image
                 image = self.cvbridge.compressed_imgmsg_to_cv2(msg)
                 
-                # Convert image to HSV color space
-
                 # Chunk image
                 chunks = self.chunk_image(image)
                 top = self.searchArea.value['top']
@@ -198,7 +196,6 @@ class Centroids(DTROS):
                     self.send_points = Float32MultiArray()
                     self.send_points.data = [coordinate for point in self.points for coordinate in point]
                     self.pub_centroid.publish(self.send_points)
-                    # if self.pub_debug_img.anybody_listening()
             
             except cv_bridge.CvBridgeError as e:
                 rospy.logerr("CvBridge Error: {0}".format(e))

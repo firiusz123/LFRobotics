@@ -77,24 +77,31 @@ class Polyfit(DTROS):
         # Separete points into x and y coordinates so that it works with polynomial fitting
         x_points, y_points = zip(*centers)
         centers_length = len(centers)
+        try: 
+            poly_degree = 3
+            if centers_length > 3:
+                for i in range(len(centers) - 1):
+                    v1 = (x_points[i], y_points[i])
+                    v2 = (x_points[i+1] - x_points[i], y_points[i+1] - y_points[i])
+                    mag1 = np.hypot(*v1)
+                    mag2 = np.hypot(*v2)
+                    if mag1 == 0 or mag2 == 0:
+                        return
+                    angle_rad = np.arccos(np.clip((v1[0]*v2[0] + v1[1]*v2[1]) / (mag1 * mag2), -1.0, 1.0))
+                    angle_deg = np.degrees(angle_rad)
+                    if angle_deg <= self.angle_treshold:
+                        poly_degree = 1
+                        break
+            elif len(centers) == 2:
+                poly_degree = 1
+            else:
+                poly_degree = 2
+ 
+        except Exception as e:
+            rospy.logerr(e)
+            return 
         
-        if centers_length >= 3:
-            for i in range(len(centers) - 1):
-                v1 = (x_points[i], y_points[i])
-                v2 = (x_points[i+1] - x_points[i], y_points[i+1] - y_points[i])
-                mag1 = np.hypot(*v1)
-                mag2 = np.hypot(*v2)
-                if mag1 == 0 or mag2 == 0:
-                    return
-                angle_rad = np.arccos(np.clip((v1[0]*v2[0] + v1[1]*v2[1]) / (mag1 * mag2), -1.0, 1.0))
-                angle_deg = np.degrees(angle_rad)
-                if angle_deg <= self.angle_treshold:
-                    threshold_triggered = True
-                    break
-        else:
-            threshold_triggered = True
 
-        poly_degree = 1 if threshold_triggered else self.poly_degree
 
         timeout_event = threading.Event()
 
@@ -110,13 +117,16 @@ class Polyfit(DTROS):
                 rospy.logerr(f"Polyfit failed: {e}")
             finally:
                 timeout_event.set()
-
-        polyfit_thread = threading.Thread(target=fit_poly)
-        polyfit_thread.start()
-        if not timeout_event.wait(timeout=0.01):
-            rospy.logwarn("Polyfit computation timed out")
-        else:
-            polyfit_thread.join()
+        
+        try:
+            polyfit_thread = threading.Thread(target=fit_poly)
+            polyfit_thread.start()
+            if not timeout_event.wait(timeout=0.01):
+                rospy.logwarn("Polyfit computation timed out")
+            else:
+                polyfit_thread.join()
+        except Exception as e:
+            rospy.logerr(f"Error in threading: {e}")
 
     def select_closest_point_reference(self,points,referencePoint):
         def distance(a,b):
