@@ -32,7 +32,7 @@ class Binmask(DTROS):
         self.searchArea = DTParam('~search_area', param_type=ParamType.DICT)
 
         #need to get rid of this asap
-        self.default_target_image = cv2.imread("/home/duckie/Documents/LFRobotics/Duckietown/Main/packages/local_image_processing/config/binmask_node/frame_0.png")
+        self.default_target_image = cv2.imread("/code/catkin_ws/src/Main/packages/local_image_processing/config/binmask_node/frame_0.png")
         # Convert color mask to np.array
         self.colorLineMask = {k : np.array(v) for k, v in self.color.value.items()}
         
@@ -58,10 +58,12 @@ class Binmask(DTROS):
         self.pubDebugImage = rospy.Publisher('~image/out/compressed', CompressedImage, queue_size=1)
 
 
-    def match_histograms(source, target_bgr):
+    def match_histograms(self, source, target_bgr):
         # Convert BGR to LAB
         source_lab = cv2.cvtColor(source, cv2.COLOR_BGR2LAB)
+        # rospy.loginfo("Source")
         target_lab = cv2.cvtColor(target_bgr, cv2.COLOR_BGR2LAB)
+        # rospy.loginfo("Target")
 
         matched_lab = np.zeros_like(source_lab)
 
@@ -71,9 +73,7 @@ class Binmask(DTROS):
             tgt = target_lab[:, :, ch].ravel()
 
             # For A and B channels (ch=1,2), shift values to [0,255]
-            if ch != 0:
-                src = src.astype(np.int16) - 128  # Assuming LAB values from OpenCV: A and B in [0,255]
-                tgt = tgt.astype(np.int16) - 128
+           
 
             # Compute histograms (256 bins over the valid range)
             src_hist, bins = np.histogram(src, bins=256, range=(0,255), density=True)
@@ -105,9 +105,9 @@ class Binmask(DTROS):
             # Read input image            
             image = self.cvbridge.compressed_imgmsg_to_cv2(msg)
             #applying the histogram matching 
-            image = self.match_histograms(image ,self.default_target_image )
+            image = self.match_histograms(image , self.default_target_image)
             
-            image = cv2.blur(image,(5,5))
+            #image = cv2.blur(image,(5,5))
             
             # Convert image to HSV color space
             imageHSV = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
